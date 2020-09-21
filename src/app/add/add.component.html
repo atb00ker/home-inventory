@@ -1,0 +1,35 @@
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12 mt-4">
+            <div *ngIf="displayAddStatus === 'none'" class="display-status-normal">
+                You can add home, location and inventory items to elastic search server.
+            </div>
+            <div *ngIf="displayAddStatus === 'error'" class="display-status-error">
+                Failed: {{ errorMessage }}
+            </div>
+            <div *ngIf="displayAddStatus === 'progress'" class="display-status-progress">
+                Progress: Sending information to elastic search server...
+            </div>
+            <div *ngIf="displayAddStatus === 'success'" class="display-status-success">
+                Success: Added to the elastic search server.
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <form #addHomeForm="ngForm" id="es-add-home-container" class="mt-4" (ngSubmit)="addHomeClick()">
+            <span>
+                <label for="es-add-home-input"> Add Home: </label>
+            </span>
+            <input name="es-add-home-input" aria-label="elastic-search-url-code" id="es-add-home-input"
+                placeholder="Sweet Home" type="text" [formControl]="addHome"
+                [ngClass]="{'text-danger error-input': addHome.invalid && addHome.touched}">
+            <button aria-label="Connect to Elastic Search server" title="Enter elastic search server"
+                [disabled]="addHome.invalid || disableConnectBtn || !connectionStatus" type="submit"
+                id="es-add-home-button" class="btn btn-primary">
+                <svg class="icon-white" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
+                    <path d="M14 10H2v2h12v-2zm0-4H2v2h12V6zm4 8v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM2 16h8v-2H2v2z" />
+                </svg>
+            </button>
+        </form>
+    </div>
+</div>

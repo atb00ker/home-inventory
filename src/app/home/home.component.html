@@ -1,0 +1,63 @@
+<div class="container mt-4">
+    <div class="row">
+        <form #esUrlForm="ngForm" id="search-item-container" (ngSubmit)="esUrlConnectClick()">
+            <span>
+                <label for="search-item-input"> Search Query: </label>
+            </span>
+            <input name="search-item-input" aria-label="search-item-url-code" id="search-item-input"
+                placeholder="Search" type="text" [formControl]="searchItem"
+                [ngClass]="{'text-danger error-input': searchItem.invalid && searchItem.touched}">
+            <button aria-label="Search Inventory" title="Search Inventory"
+                [disabled]="searchItem.invalid || disableConnectBtn" type="submit" id="search-item-button"
+                class="btn btn-primary">
+                <svg class="icon-white" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
+                    <path
+                        d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
+                </svg>
+            </button>
+        </form>
+    </div>
+    <!-- <div class="row">
+            <div class="col-12 mt-4">
+                <table *ngIf="displaySearchStatus === 'success'" class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Contact</th>
+                            <th>Website</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let ispdetail of isplistData">
+                            <td>{{ ispdetail.name }}</td>
+                            <td>{{ ispdetail.contact || '' }}</td>
+                            <td *ngIf="!ispdetail.website"></td>
+                            <td *ngIf="ispdetail.website">
+                                <a class="d-flex" target="_blank" [href]="ispdetail.website">
+                                    Website
+                                    <svg aria-hidden="true" class="ml-1 d-none d-md-block" xmlns="http://www.w3.org/2000/svg"
+                                        height="24" viewBox="0 0 24 24" width="24">
+                                        <path d="M0 0h24v24H0z" fill="none" />
+                                        <path
+                                            d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z" />
+                                    </svg>
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div *ngIf="displaySearchStatus === 'error'" class="display-status-error">
+                    The database doesn't have any information for your area. <br>
+                    If you know any providers in this area, please login to add them to the database.
+                </div>
+                <div *ngIf="displaySearchStatus === 'progress'" class="display-status-progress">
+                    Progress: Getting information from database...
+                </div>
+            </div>
+        </div> -->
+    <div class="row justify-content-center">
+        <div class="col-10 text-center text-secondary mb-4 mt-4">
+            Sample for now
+        </div>
+    </div>
+</div>
