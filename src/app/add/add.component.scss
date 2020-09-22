@@ -1,25 +1,32 @@
-#es-add-home-container {
+
+.es-add-storage-container {
   margin:auto;
-  max-width:520px;
 }
-#es-add-home-input {
+
+.es-add-storage-input {
   float: left;
-  width: 80%;
+  width: calc(100% - 48px);
+  max-width:520px;
   font-size: 17px;
   height: 35px;
   overflow: hidden;
-  font-size: 17px;
   height: 35px;
 }
 
-#es-add-home-button {
+#show-form-input {
+  font-size: 17px;
+  height: 35px;
+  overflow: hidden;
+  height: 35px;
+}
+
+.es-add-storage-button {
   float: left;
-  width: 19%;
-  max-width: 60px;
+  width: 44px;
   font-size: 15px;
   cursor: pointer;
   height: 35px !important;
   border-radius: .25rem;
   border: 0px;
-  margin-left: 1%;
+  margin-left: 3px;
 }

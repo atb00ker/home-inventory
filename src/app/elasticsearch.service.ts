@@ -3,8 +3,7 @@ import { BehaviorSubject } from 'rxjs';
 import { CookieService } from 'ngx-cookie-service';
 import { interval } from 'rxjs';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError } from 'rxjs/operators';
 import { DomSanitizer } from '@angular/platform-browser';
 
 
@@ -12,15 +11,24 @@ import { DomSanitizer } from '@angular/platform-browser';
   providedIn: 'root',
 })
 export class ElasticSearchService {
-
-
+  private pathToMetadata = '/meta/_doc/storage';
   private jsonHttpheaders = new HttpHeaders({ 'Content-type': 'application/json' });
   private status = new BehaviorSubject(false);
+  private homeList = new BehaviorSubject([]);
+  private floorList = new BehaviorSubject([]);
   connectionStatus = this.status.asObservable();
+  latestHomeList = this.homeList.asObservable();
+  latestFloorList = this.floorList.asObservable();
 
   constructor(private http: HttpClient, public sanitizer: DomSanitizer, private cookieService: CookieService) {
     this.createConnection();
-    interval(5000).subscribe((() => { this._updateStatus(); }));
+    this.periodicFunctions();
+    interval(7000).subscribe(() => this.periodicFunctions());
+  }
+
+  periodicFunctions() {
+    this._updateStatus();
+    this._getStorageMetaData();
   }
 
   createConnection() {
@@ -35,19 +43,19 @@ export class ElasticSearchService {
 
   _createMetaIndex() {
     this.createEmptyIndex()
-      .then(() => true)
+      .then()
       .catch(error => {
         console.error('Error: ' + error.message);
       });
   }
 
   createEmptyIndex(): Promise<any> {
-    let path = this.cookieService.get('es-server') + '/meta/_doc/storage';
+    let path = this.cookieService.get('es-server') + this.pathToMetadata;
     return this.http.get(path).pipe(catchError(error => {
       let data = `
       {
         "home" : [],
-        "location" : []
+        "floor" : []
       }`;
       return this.http.put(path, data, { headers: this.jsonHttpheaders });
     })).toPromise();
@@ -66,27 +74,33 @@ export class ElasticSearchService {
     return this.http.get(this.cookieService.get('es-server')).toPromise();
   }
 
-  addNewHome(homeName): Promise<any> {
+  addNewLocationItem(fieldName, itemName): Promise<any> {
     this._createMetaIndex();
-    return this.addHomeToStorage(homeName)
-      .then(() => {
-        let indexName = homeName.replace(/\s+/g, '-').toLowerCase(),
-          url = this.cookieService.get('es-server') + '/' + indexName;
-        return this.http.put<any>(url, null).toPromise();
-      })
-      .catch(error => { throw error });
-  }
-
-  addHomeToStorage(homeName): Promise<any> {
     let path = this.cookieService.get('es-server') + '/meta/_update/storage',
+      addToList = `ctx._source.` + fieldName + `.add(params.` + fieldName + `);`,
+      distinctFilter = `ctx._source.` + fieldName + `=ctx._source.` + fieldName + `.stream().distinct().collect(Collectors.toList())`,
       data = `{
       "script" : {
-        "source": "ctx._source.home.add(params.home);ctx._source.home = ctx._source.home.stream().distinct().collect(Collectors.toList())",
+        "source": "`+ addToList + distinctFilter + `",
         "params" : {
-          "home": "` + homeName + `"
+          "`+ fieldName + `": "` + itemName + `"
         }
       }
     }`
+    this._getStorageMetaData();
     return this.http.post(path, data, { headers: this.jsonHttpheaders }).toPromise();
+  }
+
+  _getStorageMetaData() {
+    this.getStorageMetaData()
+      .then(data => {
+        this.homeList.next(data._source.home);
+        this.floorList.next(data._source.floor);
+      })
+      .catch(error => console.error('Error: ' + error.message));
+  }
+
+  getStorageMetaData(): Promise<any> {
+    return this.http.get(this.cookieService.get('es-server') + this.pathToMetadata).toPromise();
   }
 }
