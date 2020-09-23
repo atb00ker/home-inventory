@@ -5,7 +5,8 @@ import { interval } from 'rxjs';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { catchError } from 'rxjs/operators';
 import { DomSanitizer } from '@angular/platform-browser';
-
+import { FormGroup } from '@angular/forms';
+import { Md5 } from 'ts-md5';
 
 @Injectable({
   providedIn: 'root',
@@ -16,10 +17,10 @@ export class ElasticSearchService {
   private jsonHttpheaders = new HttpHeaders({ 'Content-type': 'application/json' });
   private status = new BehaviorSubject(false);
   private homeList = new BehaviorSubject([]);
-  private floorList = new BehaviorSubject([]);
+  private roomList = new BehaviorSubject([]);
   connectionStatus = this.status.asObservable();
   latestHomeList = this.homeList.asObservable();
-  latestFloorList = this.floorList.asObservable();
+  latestRoomList = this.roomList.asObservable();
 
   constructor(private http: HttpClient, public sanitizer: DomSanitizer, private cookieService: CookieService) {
     this.createConnection();
@@ -52,11 +53,11 @@ export class ElasticSearchService {
 
   createEmptyIndex(): Promise<any> {
     let path = this.cookieService.get('es-server') + this.pathToMetadata;
-    return this.http.get(path).pipe(catchError(error => {
+    return this.http.get(path).pipe(catchError(() => {
       let data = `
       {
         "home" : [],
-        "floor" : []
+        "room" : []
       }`;
       return this.http.put(path, data, { headers: this.jsonHttpheaders });
     })).toPromise();
@@ -103,7 +104,6 @@ export class ElasticSearchService {
   }
 
   editLocation(fieldName: string, itemName: string, newName: string): Promise<any> {
-    // TODO: Improve, use one request.
     return this.removeLocation(fieldName, itemName).then(() => this.addLocation(fieldName, newName));
   }
 
@@ -119,12 +119,59 @@ export class ElasticSearchService {
     return this.http.post(path, data, { headers: this.jsonHttpheaders }).toPromise();
   }
 
+  // Manage Inventory
+  manageInventory(action: string, inventoryForm: FormGroup): Promise<any> {
+    if (action == 'add')
+      return this.addInventory(inventoryForm)
+        .then(() => this._getStorageMetaData());
+    else if (action == 'delete')
+      return this.deleteInventory(inventoryForm)
+        .then(() => this._getStorageMetaData());
+    else if (action == 'edit')
+      return this.editInventory(inventoryForm)
+        .then(() => this._getStorageMetaData());
+  }
+
+  addInventory(inventoryForm: FormGroup): Promise<any> {
+    let name = inventoryForm.controls.name.value,
+      count = inventoryForm.controls.count.value,
+      description = inventoryForm.controls.description.value,
+      landmark = inventoryForm.controls.description.value,
+      room = inventoryForm.controls.selectRoomForItem.value,
+      home = inventoryForm.controls.selectHomeForItem.value,
+      uuid = Md5.hashStr(name + count + description + landmark + home + room),
+      path = this.cookieService.get('es-server') + '/inventory/_create/' + uuid,
+      data = `{
+        "name": "` + name + `",
+        "description": "` + description + `",
+        "count": "` + count + `",
+        "landmark": "` + landmark + `",
+        "room": "` + room + `",
+        "home": "` + home + `"
+      }`
+    return this.http.put(path, data, { headers: this.jsonHttpheaders }).toPromise();
+  }
+
+  deleteInventory(inventoryForm: FormGroup): Promise<any> {
+    return this.http.get(this.cookieService.get('es-server')).toPromise();
+  }
+  editInventory(inventoryForm: FormGroup): Promise<any> {
+    return this.http.get(this.cookieService.get('es-server')).toPromise();
+  }
+
   // Utilities Functions
+  getRoomListForHome(homeName: string, pageRoomList: Array<string>): Array<string> {
+    const removeLength = homeName.length + 2;
+    return pageRoomList
+      .filter(roomName => roomName.startsWith(homeName))
+      .map(roomName => roomName.substring(removeLength));
+  }
+
   _getStorageMetaData(): Promise<any> {
     return this.getStorageMetaData()
       .then(data => {
         this.homeList.next(data._source.home);
-        this.floorList.next(data._source.floor);
+        this.roomList.next(data._source.room);
       })
       .catch(error => console.error('Error: ' + error.message));
   }
@@ -133,7 +180,7 @@ export class ElasticSearchService {
     return this.http.get(this.cookieService.get('es-server') + this.pathToMetadata).toPromise();
   }
 
-  getFloorListName(homeName, floorName): string {
-    return homeName + '::' + floorName;
+  getRoomListName(homeName, roomName): string {
+    return homeName + '::' + roomName;
   }
 }

@@ -8,17 +8,17 @@
   height: 35px;
   overflow: hidden;
   height: 35px;
-}
-
-.es-add-storage-input {
-  @extend .general-input;
+  width: 100%;
   float: left;
-  width: calc(100% - 48px);
-  max-width:520px;
 }
 
-.es-edit-storage-input {
-  @extend .es-add-storage-input;
+.input-inline-submit-btn {
+  @extend .general-input;
+  width: calc(100% - 48px);
+}
+
+.input-inline-edit-btns {
+  @extend .input-inline-submit-btn;
   width: calc(100% - 96px);
 }
 

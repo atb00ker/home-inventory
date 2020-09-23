@@ -2,7 +2,7 @@
     <div class="row">
         <div class="col-12 mt-4">
             <div *ngIf="displayAddStatus === 'none'" class="display-status-normal">
-                You can add home, floor and inventory items to elastic search server.
+                You can add home, room and inventory items to elastic search server.
             </div>
             <div *ngIf="displayAddStatus === 'error'" class="display-status-error">
                 Failed: {{ errorMessage }}
@@ -22,10 +22,11 @@
                 [ngClass]="{'text-danger error-input': formToDisplay == 'error'}">
                 <option value='error'> -- Select Form to display -- </option>
                 <option value='home'> Add Home </option>
-                <option value='floor'> Add Floor </option>
+                <option value='room'> Add Room </option>
+                <option value='inventory'> Add Inventory Item </option>
                 <option value='manage-home'> Manage Homes </option>
-                <option value='manage-floor'> Manage Floors </option>
-                <option value='inventory'> Manage Inventory Items </option>
+                <option value='manage-room'> Manage Rooms </option>
+                <option value='manage-inventory'> Manage Inventory Items </option>
             </select>
         </div>
     </form>
@@ -35,7 +36,7 @@
                 <div>
                     <label for="es-add-home-input"> Add Home: </label>
                 </div>
-                <input name="es-add-home-input" aria-label="Enter Home Name to Add" class="es-add-storage-input"
+                <input name="es-add-home-input" aria-label="Enter Home Name to Add" class="input-inline-submit-btn"
                     placeholder="Sweet Home" type="text" [formControl]="addHome"
                     [ngClass]="{'text-danger error-input': addHome.invalid && addHome.touched}">
                 <button aria-label="Submit add Home Form" title="Add Home"
@@ -65,7 +66,7 @@
                 <div>
                     <label for="es-edit-home-input"> Edit Name: </label>
                 </div>
-                <input name="es-edit-home-input" aria-label="Enter New Home Name" class="es-edit-storage-input"
+                <input name="es-edit-home-input" aria-label="Enter New Home Name" class="input-inline-edit-btns"
                     placeholder="Sweet Home" [value]="editHomeForm.get('selectHomeForEdit').value" type="text"
                     formControlName="editedHomeName"
                     [ngClass]="{'text-danger error-input': editHomeForm.get('editedHomeName').invalid && editHomeForm.get('editedHomeName').touched}">
@@ -90,27 +91,27 @@
             </div>
         </form>
     </div>
-    <div *ngIf="formToDisplay === 'floor'">
-        <form [formGroup]="addFloorForm" class="manage-storage-container row mt-4" (ngSubmit)="addFloorClick()">
+    <div *ngIf="formToDisplay === 'room'">
+        <form [formGroup]="addRoomForm" class="manage-storage-container row mt-4" (ngSubmit)="addRoomClick()">
             <div class="col-6">
                 <div>
-                    <label for="es-add-floor-home-select"> Select Home: </label>
+                    <label for="es-add-room-home-select"> Select Home: </label>
                 </div>
-                <select name="es-add-floor-home-select" formControlName="homeListField" class="form-control"
-                    [ngClass]="{'text-danger error-input': addFloorForm.get('homeListField').invalid && addFloorForm.get('homeListField').touched}">
+                <select name="es-add-room-home-select" formControlName="homeListField" class="form-control"
+                    [ngClass]="{'text-danger error-input': addRoomForm.get('homeListField').invalid && addRoomForm.get('homeListField').touched}">
                     <option selected disabled value> -- Select Home -- </option>
                     <option *ngFor="let home of homeList" [ngValue]="home">{{home}}</option>
                 </select>
             </div>
             <div class="col-6">
                 <div>
-                    <label for="es-add-floor-input"> Add Floor: </label>
+                    <label for="es-add-room-input"> Add Room: </label>
                 </div>
-                <input name="es-add-floor-input" aria-label="Enter Floor Name" class="es-add-storage-input"
-                    placeholder="Basement" type="text" formControlName="addFloorField"
-                    [ngClass]="{'text-danger error-input': addFloorForm.get('addFloorField').invalid && addFloorForm.get('addFloorField').touched}">
-                <button aria-label="Submit add Floor Form" title="Floor Name"
-                    [disabled]="addFloorForm.invalid || disableSubmitBtn || !connectionStatus" type="submit"
+                <input name="es-add-room-input" aria-label="Enter Room Name" class="input-inline-submit-btn"
+                    placeholder="Basement" type="text" formControlName="addRoomField"
+                    [ngClass]="{'text-danger error-input': addRoomForm.get('addRoomField').invalid && addRoomForm.get('addRoomField').touched}">
+                <button aria-label="Submit add Room Form" title="Room Name"
+                    [disabled]="addRoomForm.invalid || disableSubmitBtn || !connectionStatus" type="submit"
                     class="es-add-storage-button btn btn-primary">
                     <svg class="icon-white" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24"
                         width="24">
@@ -120,39 +121,40 @@
             </div>
         </form>
     </div>
-    <div *ngIf="formToDisplay === 'manage-floor'">
-        <form [formGroup]="editFloorForm" class="manage-storage-container row mt-4">
+    <div *ngIf="formToDisplay === 'manage-room'">
+        <form [formGroup]="editRoomForm" class="manage-storage-container row mt-4">
             <div class="col-6">
                 <div>
-                    <label for="es-edit-floor-home-select"> Select Home: </label>
+                    <label for="es-edit-room-home-select"> Select Home: </label>
                 </div>
-                <select name="es-edit-floor-home-select" formControlName="selectHomeForEdit" class="form-control"
-                    (change)="getFloorListOfHome()"
-                    [ngClass]="{'text-danger error-input': editFloorForm.get('selectHomeForEdit').invalid && editFloorForm.get('selectHomeForEdit').touched}">
+                <select name="es-edit-room-home-select" formControlName="selectHomeForEdit" class="form-control"
+                    (change)="getRoomsForEditRoomForm()"
+                    [ngClass]="{'text-danger error-input': editRoomForm.get('selectHomeForEdit').invalid && editRoomForm.get('selectHomeForEdit').touched}">
                     <option selected disabled value> -- Select Home -- </option>
                     <option *ngFor="let home of homeList" [ngValue]="home">{{ home }}</option>
                 </select>
             </div>
             <div class="col-6">
                 <div>
-                    <label for="es-edit-floor-select"> Select Floor: </label>
+                    <label for="es-edit-room-select"> Select Room: </label>
                 </div>
-                <select name="es-edit-floor-select" formControlName="selectFloorForEdit" class="form-control"
-                    [ngClass]="{'text-danger error-input': editFloorForm.get('selectFloorForEdit').invalid && editFloorForm.get('selectFloorForEdit').touched}">
-                    <option selected disabled value> -- Select Floor -- </option>
-                    <option *ngFor="let floor of floorListFilterForEditFloor" [ngValue]="floor">{{ floor }}</option>
+                <select name="es-edit-room-select" formControlName="selectRoomForEdit" class="form-control"
+                    [ngClass]="{'text-danger error-input': editRoomForm.get('selectRoomForEdit').invalid && editRoomForm.get('selectRoomForEdit').touched}">
+                    <option selected disabled value> -- Select Room -- </option>
+                    <option *ngFor="let room of filteredRoomListForEditRoomForm" [ngValue]="room">{{ room }}
+                    </option>
                 </select>
             </div>
             <div class="col-12 mt-4">
                 <div>
-                    <label for="es-edit-floor-input"> Edit Name: </label>
+                    <label for="es-edit-room-input"> Edit Name: </label>
                 </div>
-                <input name="es-edit-floor-input" aria-label="Enter New Floor Name" class="es-edit-storage-input"
-                    placeholder="Groud Floor" [value]="editFloorForm.get('selectFloorForEdit').value" type="text"
-                    formControlName="editedFloorName"
-                    [ngClass]="{'text-danger error-input': editFloorForm.get('editedFloorName').invalid && editFloorForm.get('editedFloorName').touched}">
-                <button aria-label="Edit Home" title="Edit Home" (click)="editFloorClick()"
-                    [disabled]="editFloorForm.get('editedFloorName').invalid || editFloorForm.get('selectHomeForEdit').invalid || disableSubmitBtn || !connectionStatus"
+                <input name="es-edit-room-input" aria-label="Enter New Room Name" class="input-inline-edit-btns"
+                    placeholder="Groud Room" [value]="editRoomForm.get('selectRoomForEdit').value" type="text"
+                    formControlName="editedRoomName"
+                    [ngClass]="{'text-danger error-input': editRoomForm.get('editedRoomName').invalid && editRoomForm.get('editedRoomName').touched}">
+                <button aria-label="Edit Home" title="Edit Home" (click)="editRoomClick()"
+                    [disabled]="editRoomForm.get('editedRoomName').invalid || editRoomForm.get('selectHomeForEdit').invalid || disableSubmitBtn || !connectionStatus"
                     type="submit" class="es-add-storage-button btn btn-primary">
                     <svg class="icon-white" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 22 18"
                         width="24">
@@ -161,12 +163,82 @@
                     </svg>
                 </button>
                 <button aria-label="Delete Home" title="Delete Home"
-                    [disabled]=" editFloorForm.get('selectHomeForEdit').invalid || disableSubmitBtn || !connectionStatus"
-                    (click)="removeFloorClick()" class="es-add-storage-button btn btn-danger">
+                    [disabled]=" editRoomForm.get('selectHomeForEdit').invalid || disableSubmitBtn || !connectionStatus"
+                    (click)="removeRoomClick()" class="es-add-storage-button btn btn-danger">
                     <svg class="icon-white" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="2 2 24 22"
                         width="24">
                         <path
                             d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm2.46-7.12l1.41-1.41L12 12.59l2.12-2.12 1.41 1.41L13.41 14l2.12 2.12-1.41 1.41L12 15.41l-2.12 2.12-1.41-1.41L10.59 14l-2.13-2.12zM15.5 4l-1-1h-5l-1 1H5v2h14V4z" />
+                    </svg>
+                </button>
+            </div>
+        </form>
+    </div>
+    <div>
+        <!-- <div *ngIf="formToDisplay === 'inventory'"> -->
+        <form autocomplete="off" [formGroup]="addInventoryForm" class="manage-storage-container row mt-2"
+            (ngSubmit)="manageInventoryHandler('add')">
+            <div class="col-6 mt-2">
+                <div>
+                    <label for="es-add-inventory-home-select"> Select Home: </label>
+                </div>
+                <select name="es-add-inventory-home-select" formControlName="selectHomeForItem" class="form-control"
+                    (change)="getRoomsForAddInventoryForm()"
+                    [ngClass]="{'text-danger error-input': addInventoryForm.get('selectHomeForItem').invalid && addInventoryForm.get('selectHomeForItem').touched}">
+                    <option selected disabled value> -- Select Home -- </option>
+                    <option *ngFor="let home of homeList" [ngValue]="home">{{ home }}</option>
+                </select>
+            </div>
+            <div class="col-6 mt-2">
+                <div>
+                    <label for="es-add-inventory-room-select"> Select Room: </label>
+                </div>
+                <select name="es-add-inventory-room-select" formControlName="selectRoomForItem" class="form-control"
+                    [ngClass]="{'text-danger error-input': addInventoryForm.get('selectRoomForItem').invalid && addInventoryForm.get('selectRoomForItem').touched}">
+                    <option selected disabled value> -- Select Room -- </option>
+                    <option *ngFor="let room of filteredRoomListForAddInventoryForm" [ngValue]="room">{{ room }}
+                    </option>
+                </select>
+            </div>
+            <div class="col-6 mt-2">
+                <div>
+                    <label for="es-add-inventory-name-input"> Item Name: </label>
+                </div>
+                <input name="es-add-inventory-name-input" aria-label="Enter Inventory Item Name" class="general-input"
+                    placeholder="LG Nexus 5" data-lpignore="true" type="text" formControlName="name"
+                    [ngClass]="{'text-danger error-input': addInventoryForm.get('name').invalid && addInventoryForm.get('name').touched}">
+            </div>
+            <div class="col-6 mt-2">
+                <div>
+                    <label for="es-add-inventory-count-input"> Item Count: </label>
+                </div>
+                <input name="es-add-inventory-count-input" aria-label="Enter Inventory Item Count" class="general-input"
+                    data-lpignore="true" placeholder="1" type="text" formControlName="count"
+                    [ngClass]="{'text-danger error-input': addInventoryForm.get('count').invalid && addInventoryForm.get('count').touched}">
+            </div>
+            <div class="col-12 mt-2">
+                <div>
+                    <label for="es-add-inventory-description-input"> Item Description: </label>
+                </div>
+                <input name="es-add-inventory-description-input" aria-label="Enter Inventory Item Description"
+                    class="general-input" data-lpignore="true" placeholder="Old Phone, Working Condition" type="text"
+                    formControlName="description"
+                    [ngClass]="{'text-danger error-input': addInventoryForm.get('description').invalid && addInventoryForm.get('description').touched}">
+            </div>
+            <div class="col-12 mt-2">
+                <div>
+                    <label for="es-add-inventory-landmark-input"> Item Landmark: </label>
+                </div>
+                <input name="es-add-inventory-landmark-input" aria-label="Enter Inventory Item Landmark"
+                    class="input-inline-submit-btn" data-lpignore="true" placeholder="Blue Wardrobe" type="text"
+                    formControlName="landmark"
+                    [ngClass]="{'text-danger error-input': addInventoryForm.get('landmark').invalid && addInventoryForm.get('landmark').touched}">
+                <button aria-label="Submit add inventory item form" title="Add Inventory Item"
+                    [disabled]="addInventoryForm.invalid || disableSubmitBtn || !connectionStatus" type="submit"
+                    class="es-add-storage-button btn btn-primary">
+                    <svg class="icon-white" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24"
+                        width="24">
+                        <path d="M14 10H2v2h12v-2zm0-4H2v2h12V6zm4 8v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM2 16h8v-2H2v2z" />
                     </svg>
                 </button>
             </div>

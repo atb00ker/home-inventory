@@ -13,7 +13,7 @@ import { ElasticSearchService } from '../elasticsearch.service';
 export class ManageEntitiesComponent implements OnInit {
   public connectionStatus = false;
   public homeList = [];
-  public floorList = [];
+  public roomList = [];
 
   constructor(private titleService: Title, private esService: ElasticSearchService, private cookieService: CookieService) {
     this.titleService.setTitle("Home Inventory | Add Intentory Items");
@@ -22,7 +22,7 @@ export class ManageEntitiesComponent implements OnInit {
   ngOnInit() {
     this.esService.connectionStatus.subscribe(status => this.connectionStatus = status);
     this.esService.latestHomeList.subscribe(homeList => this.homeList = homeList);
-    this.esService.latestFloorList.subscribe(floorList => this.floorList = floorList);
+    this.esService.latestRoomList.subscribe(roomList => this.roomList = roomList);
   }
 
   public formToDisplay = 'none';
@@ -43,7 +43,7 @@ export class ManageEntitiesComponent implements OnInit {
       this.errorMessage = '';
       this.esService.periodicFunctions();
     }
-    this.clearManageLocationForms();
+    this.clearAllForms();
   }
 
   // Manage Homes Section
@@ -91,90 +91,114 @@ export class ManageEntitiesComponent implements OnInit {
     }
   }
 
-  // Manage Floor Section
-  addFloorForm = new FormGroup({
-    addFloorField: new FormControl('', [Validators.required]),
+  // Manage Room Section
+  addRoomForm = new FormGroup({
+    addRoomField: new FormControl('', [Validators.required]),
     homeListField: new FormControl(this.homeList, [Validators.required]),
   });
-  editFloorForm = new FormGroup({
+  editRoomForm = new FormGroup({
     selectHomeForEdit: new FormControl(this.homeList, [Validators.required]),
-    selectFloorForEdit: new FormControl(this.floorList, [Validators.required]),
-    editedFloorName: new FormControl('', [Validators.required]),
+    selectRoomForEdit: new FormControl(this.roomList, [Validators.required]),
+    editedRoomName: new FormControl('', [Validators.required]),
   });
-  public floorListFilterForEditFloor: Array<string>;
+  public filteredRoomListForEditRoomForm: Array<string>;
 
-  addFloorClick() {
-    let floorName = this.esService.getFloorListName(this.addFloorForm.controls.homeListField.value, this.addFloorForm.controls.addFloorField.value);
-    if (this.floorList.indexOf(floorName) !== -1) {
+  addRoomClick() {
+    let roomName = this.esService.getRoomListName(this.addRoomForm.controls.homeListField.value, this.addRoomForm.controls.addRoomField.value);
+    if (this.roomList.indexOf(roomName) !== -1) {
       this.displayAddStatus = 'error';
-      this.errorMessage = 'Floor already exists in the Elastic Search Server.';
+      this.errorMessage = 'Room already exists in the Elastic Search Server.';
     }
     else {
-      this.manageLocationHandler('add', 'floor', floorName);
+      this.manageLocationHandler('add', 'room', roomName);
     }
   }
 
-  editFloorClick() {
-    let selectedHome = this.editFloorForm.controls.selectHomeForEdit.value,
-      selectedFloor = this.editFloorForm.controls.selectFloorForEdit.value,
-      originalFloorName = this.esService.getFloorListName(selectedHome, selectedFloor),
-      newFloorName = this.esService.getFloorListName(selectedHome, this.editFloorForm.controls.editedFloorName.value);
-    if (this.floorList.indexOf(originalFloorName) === -1) {
+  editRoomClick() {
+    let selectedHome = this.editRoomForm.controls.selectHomeForEdit.value,
+      selectedRoom = this.editRoomForm.controls.selectRoomForEdit.value,
+      originalRoomName = this.esService.getRoomListName(selectedHome, selectedRoom),
+      newRoomName = this.esService.getRoomListName(selectedHome, this.editRoomForm.controls.editedRoomName.value);
+    if (this.roomList.indexOf(originalRoomName) === -1) {
       this.displayAddStatus = 'error';
-      this.errorMessage = originalFloorName + ' does not exist the Elastic Search Server.';
+      this.errorMessage = originalRoomName + ' does not exist the Elastic Search Server.';
     } else {
-      this.manageLocationHandler('edit', 'floor', originalFloorName, newFloorName);
+      this.manageLocationHandler('edit', 'room', originalRoomName, newRoomName);
     }
   }
 
-  removeFloorClick() {
-    let response = confirm("Are you sure? All the Items in the floor will be deleted!");
+  removeRoomClick() {
+    let response = confirm("Are you sure? All the Items in the room will be deleted!");
     if (response) {
-      let selectedHome = this.editFloorForm.controls.selectHomeForEdit.value,
-        selectedFloor = this.editFloorForm.controls.selectFloorForEdit.value,
-        floorName = this.esService.getFloorListName(selectedHome, selectedFloor);
-      if (this.floorList.indexOf(floorName) === -1) {
+      let selectedHome = this.editRoomForm.controls.selectHomeForEdit.value,
+        selectedRoom = this.editRoomForm.controls.selectRoomForEdit.value,
+        roomName = this.esService.getRoomListName(selectedHome, selectedRoom);
+      if (this.roomList.indexOf(roomName) === -1) {
         this.displayAddStatus = 'error';
-        this.errorMessage = selectedFloor + ' does not exist the Elastic Search Server.';
+        this.errorMessage = selectedRoom + ' does not exist the Elastic Search Server.';
       }
       else {
-        this.manageLocationHandler('delete', 'floor', floorName);
+        this.manageLocationHandler('delete', 'room', roomName);
       }
     }
   }
 
-
-  getFloorListOfHome() {
-    const homeName = this.editFloorForm.controls.selectHomeForEdit.value,
-      removeLength = homeName.length + 2;
-    this.floorListFilterForEditFloor = this.floorList
-      .filter(floorName => floorName.startsWith(homeName))
-      .map(floorName => floorName.substring(removeLength));
+  getRoomsForEditRoomForm() {
+    this.filteredRoomListForEditRoomForm = this.esService.getRoomListForHome(this.editRoomForm.controls.selectHomeForEdit.value, this.roomList);
   }
 
-  // Manage Home / Floor Common
+  // Manage Home / Room Common
   manageLocationHandler(action: string, fieldName: string, fieldValue: string, newName: string = '') {
+    // TODO: Not requried now
+    let successMsg = 'Operation to ' + action + ' ' + fieldName + ' completed!',
+      actionPromise = this.esService.manageLocation(action, fieldName, fieldValue, newName)
+    this.actionPromiseHandler(successMsg, actionPromise);
+  }
+
+  // Manage Inventory Section
+  addInventoryForm = new FormGroup({
+    selectHomeForItem: new FormControl(this.homeList, [Validators.required]),
+    selectRoomForItem: new FormControl(this.roomList, [Validators.required]),
+    name: new FormControl('', [Validators.required]),
+    landmark: new FormControl(''),
+    description: new FormControl(''),
+    count: new FormControl('', [Validators.required, Validators.min(0)]),
+  });
+  public filteredRoomListForAddInventoryForm: Array<string>;
+
+  getRoomsForAddInventoryForm() {
+    this.filteredRoomListForAddInventoryForm = this.esService.getRoomListForHome(this.addInventoryForm.controls.selectHomeForItem.value, this.roomList);
+  }
+
+  manageInventoryHandler(action: string) {
+    let actionPromise = this.esService.manageInventory(action, this.addInventoryForm),
+      successMsg = 'Operation to ' + action + ' inventory item completed!';
+    this.actionPromiseHandler(successMsg, actionPromise);
+  }
+
+  // Utility Functions
+  actionPromiseHandler(successMsg: string, actionPromise: Promise<any>) {
     this.displayAddStatus = 'progress';
     this.disableSubmitBtn = true;
-    this.esService.manageLocation(action, fieldName, fieldValue, newName)
+    actionPromise
       .then(() => {
-        this.clearManageLocationForms();
+        this.clearAllForms();
         this.displayAddStatus = 'success';
-        this.successMessage = 'Operation to ' + action + ' ' + fieldName + ' completed!';
+        this.successMessage = successMsg;
       })
       .catch(error => {
         this.displayAddStatus = 'error';
-        this.errorMessage = error.message;
-        console.error('Error: ' + error.message);
+        this.errorMessage = 'Error ' + error.status + ' - ' + error.statusText;
+        console.error('Error: ' + this.errorMessage);
       })
       .finally(() => this.disableSubmitBtn = false);
   }
 
-  // Clear Forms
-  clearManageLocationForms() {
+  clearAllForms() {
     this.addHome.reset();
     this.editHomeForm.reset();
-    this.addFloorForm.reset();
-    this.editFloorForm.reset();
+    this.addRoomForm.reset();
+    this.editRoomForm.reset();
+    this.addInventoryForm.reset();
   }
 }
