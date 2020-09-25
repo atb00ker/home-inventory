@@ -6,7 +6,6 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { catchError } from 'rxjs/operators';
 import { DomSanitizer } from '@angular/platform-browser';
 import { FormGroup } from '@angular/forms';
-import { Md5 } from 'ts-md5';
 
 @Injectable({
   providedIn: 'root',
@@ -40,18 +39,19 @@ export class ElasticSearchService {
     }
     this.cookieService.set('es-server', server);
     this._updateStatus();
-    this._createMetaIndex();
+    this._initElasticSearchIndexes();
   }
 
-  _createMetaIndex() {
-    this.createEmptyIndex()
+  _initElasticSearchIndexes() {
+    this.createEmptyMetaIndex()
       .then()
-      .catch(error => {
-        console.error('Error: ' + error.message);
-      });
+      .catch(error => console.error('Error: ' + error.message));
+    this.createEmptyInventory()
+      .then()
+      .catch(error => console.error('Error: ' + error.message));
   }
 
-  createEmptyIndex(): Promise<any> {
+  createEmptyMetaIndex(): Promise<any> {
     let path = this.cookieService.get('es-server') + this.pathToMetadata;
     return this.http.get(path).pipe(catchError(() => {
       let data = `
@@ -59,7 +59,26 @@ export class ElasticSearchService {
         "home" : [],
         "room" : []
       }`;
-      return this.http.put(path, data, { headers: this.jsonHttpheaders });
+      return this.http.put(path, data, { headers: this.jsonHttpheaders })
+    })).toPromise();
+  }
+
+  createEmptyInventory(): Promise<any> {
+    let path = this.cookieService.get('es-server') + '/inventory';
+    return this.http.get(path).pipe(catchError(() => {
+      let data = `{
+        "mappings": {
+          "properties": {
+            "name": { "type": "text" },
+            "description": { "type": "text" },
+            "count": { "type": "short" },
+            "home": { "type": "keyword" },
+            "room": { "type": "keyword" },
+            "landmark": { "type": "text" }
+          }
+        }
+      }`
+      return this.http.put(path, data, { headers: this.jsonHttpheaders })
     })).toPromise();
   }
 
@@ -90,7 +109,7 @@ export class ElasticSearchService {
   }
 
   addLocation(fieldName: string, itemName: string): Promise<any> {
-    this._createMetaIndex();
+    this._initElasticSearchIndexes();
     let path = this.cookieService.get('es-server') + this.pathToUpdateMetadata,
       ctx_source = `ctx._source.` + fieldName,
       addToList = ctx_source + `.add('` + itemName + `');`,
@@ -120,31 +139,26 @@ export class ElasticSearchService {
   }
 
   // Manage Inventory
-  manageInventory(action: string, inventoryForm: FormGroup): Promise<any> {
+  manageInventory(action: string, name: string, description: string, count: number,
+    landmark: string, room: string, home: string, uuid: string | Int32Array): Promise<any> {
     if (action == 'add')
-      return this.addInventory(inventoryForm)
+      return this.addInventory(name, description, count, landmark, room, home, uuid)
         .then(() => this._getStorageMetaData());
     else if (action == 'delete')
-      return this.deleteInventory(inventoryForm)
+      return this.deleteInventory(name, description, count, landmark, room, home, uuid)
         .then(() => this._getStorageMetaData());
     else if (action == 'edit')
-      return this.editInventory(inventoryForm)
+      return this.editInventory(name, description, count, landmark, room, home, uuid)
         .then(() => this._getStorageMetaData());
   }
 
-  addInventory(inventoryForm: FormGroup): Promise<any> {
-    let name = inventoryForm.controls.name.value,
-      count = inventoryForm.controls.count.value,
-      description = inventoryForm.controls.description.value,
-      landmark = inventoryForm.controls.description.value,
-      room = inventoryForm.controls.selectRoomForItem.value,
-      home = inventoryForm.controls.selectHomeForItem.value,
-      uuid = Md5.hashStr(name + count + description + landmark + home + room),
-      path = this.cookieService.get('es-server') + '/inventory/_create/' + uuid,
+  addInventory(name: string, description: string, count: number, landmark: string,
+    room: string, home: string, uuid: string | Int32Array): Promise<any> {
+    let path = this.cookieService.get('es-server') + '/inventory/_create/' + uuid,
       data = `{
         "name": "` + name + `",
         "description": "` + description + `",
-        "count": "` + count + `",
+        "count": ` + count + `,
         "landmark": "` + landmark + `",
         "room": "` + room + `",
         "home": "` + home + `"
@@ -152,11 +166,41 @@ export class ElasticSearchService {
     return this.http.put(path, data, { headers: this.jsonHttpheaders }).toPromise();
   }
 
-  deleteInventory(inventoryForm: FormGroup): Promise<any> {
+  deleteInventory(name: string, description: string, count: number,
+    landmark: string, room: string, home: string, uuid: string | Int32Array): Promise<any> {
     return this.http.get(this.cookieService.get('es-server')).toPromise();
   }
-  editInventory(inventoryForm: FormGroup): Promise<any> {
+  editInventory(name: string, description: string, count: number,
+    landmark: string, room: string, home: string, uuid: string | Int32Array): Promise<any> {
     return this.http.get(this.cookieService.get('es-server')).toPromise();
+  }
+
+  getInventoryItemByUUID(uuid: string) {
+    let url = this.cookieService.get('es-server') + '/inventory/_doc/' + uuid;
+    return this.http.get(url).toPromise();
+  }
+
+  // Search Section
+  searchInInventory(searchQuery: string, searchInHome: string, searchInRoom: string, advancedSearch: string) {
+    let path = this.cookieService.get('es-server') + '/inventory/_search',
+      data, homeInfo, roomInfo;
+    if (advancedSearch !== '') { data = advancedSearch; }
+    else {
+      searchInHome !== '' ? homeInfo = '{ "term": { "home": "' + searchInHome + '" } },' : homeInfo = '';
+      searchInRoom !== '' ? roomInfo = '{ "term": { "room": "' + searchInRoom + '" } },' : roomInfo = '';
+      data = `{"query": { "bool": {
+                "must": [` + homeInfo + roomInfo + `
+                  {
+                    "multi_match": {
+                      "query": "` + searchQuery + `",
+                      "type": "most_fields",
+                      "fields": ["name", "description", "landmark"]
+                    }
+                  }
+                ]}
+              }}`;
+    }
+    return this.http.post(path, data, { headers: this.jsonHttpheaders }).toPromise();
   }
 
   // Utilities Functions

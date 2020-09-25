@@ -1,6 +1,6 @@
 
 import { HostListener, Component, OnInit } from '@angular/core';
-import { AppRoutes } from '../app-routing.module';
+import { AppRoutes } from '../app.routes';
 import { CookieService } from 'ngx-cookie-service';
 // Home Inventory
 import { ElasticSearchService } from '../elasticsearch.service';
@@ -13,9 +13,9 @@ import { ElasticSearchService } from '../elasticsearch.service';
 export class NavComponent implements OnInit {
 
   // Path
-  public HOME_PATH: string = '/' + AppRoutes.home;
-  public CONFIG_PATH: string = '/' + AppRoutes.config;
-  public MANAGE_PATH: string = '/' + AppRoutes.manage;
+  public HOME_PATH = '/' + AppRoutes.home;
+  public CONFIG_PATH = '/' + AppRoutes.config;
+  public MANAGE_PATH = '/' + AppRoutes.manage;
   public collapseEnabled = 'NavBar';
   public connectionStatus = false;
   constructor(private cookieService: CookieService, private esService: ElasticSearchService) { }

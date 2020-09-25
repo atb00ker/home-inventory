@@ -26,7 +26,8 @@
                 <option value='inventory'> Add Inventory Item </option>
                 <option value='manage-home'> Manage Homes </option>
                 <option value='manage-room'> Manage Rooms </option>
-                <option value='manage-inventory'> Manage Inventory Items </option>
+                <option [attr.selected]="formToDisplay == 'manage-inventory' ? true : null" value='manage-inventory'>
+                    Manage Inventory Items </option>
             </select>
         </div>
     </form>
@@ -41,8 +42,8 @@
                     [ngClass]="{'text-danger error-input': addHome.invalid && addHome.touched}">
                 <button aria-label="Submit add Home Form" title="Add Home"
                     [disabled]="addHome.invalid || disableSubmitBtn || !connectionStatus" type="submit"
-                    class="es-add-storage-button btn btn-primary">
-                    <svg class="icon-white" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24"
+                    class="btn-inline-form-input btn btn-primary">
+                    <svg class="icon-white" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 2 24 24"
                         width="24">
                         <path d="M14 10H2v2h12v-2zm0-4H2v2h12V6zm4 8v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM2 16h8v-2H2v2z" />
                     </svg>
@@ -72,8 +73,8 @@
                     [ngClass]="{'text-danger error-input': editHomeForm.get('editedHomeName').invalid && editHomeForm.get('editedHomeName').touched}">
                 <button aria-label="Edit Home" title="Edit Home" (click)="editHomeClick()"
                     [disabled]="editHomeForm.get('editedHomeName').invalid || editHomeForm.get('selectHomeForEdit').invalid || disableSubmitBtn || !connectionStatus"
-                    type="submit" class="es-add-storage-button btn btn-primary">
-                    <svg class="icon-white" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 22 18"
+                    type="submit" class="btn-inline-form-input btn btn-primary">
+                    <svg class="icon-white" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 21"
                         width="24">
                         <path
                             d="M2 12.88V16h3.12L14 7.12 10.88 4 2 12.88zm14.76-8.51c.33-.33.33-.85 0-1.18l-1.95-1.95c-.33-.33-.85-.33-1.18 0L12 2.88 15.12 6l1.64-1.63z" />
@@ -81,8 +82,8 @@
                 </button>
                 <button aria-label="Delete Home" title="Delete Home"
                     [disabled]=" editHomeForm.get('selectHomeForEdit').invalid || disableSubmitBtn || !connectionStatus"
-                    (click)="removeHomeClick()" class="es-add-storage-button btn btn-danger">
-                    <svg class="icon-white" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="2 2 24 22"
+                    (click)="removeHomeClick()" class="btn-inline-form-input btn btn-danger">
+                    <svg class="icon-white" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="3 2 24 24"
                         width="24">
                         <path
                             d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm2.46-7.12l1.41-1.41L12 12.59l2.12-2.12 1.41 1.41L13.41 14l2.12 2.12-1.41 1.41L12 15.41l-2.12 2.12-1.41-1.41L10.59 14l-2.13-2.12zM15.5 4l-1-1h-5l-1 1H5v2h14V4z" />
@@ -112,8 +113,8 @@
                     [ngClass]="{'text-danger error-input': addRoomForm.get('addRoomField').invalid && addRoomForm.get('addRoomField').touched}">
                 <button aria-label="Submit add Room Form" title="Room Name"
                     [disabled]="addRoomForm.invalid || disableSubmitBtn || !connectionStatus" type="submit"
-                    class="es-add-storage-button btn btn-primary">
-                    <svg class="icon-white" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24"
+                    class="btn-inline-form-input btn btn-primary">
+                    <svg class="icon-white" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 2 24 24"
                         width="24">
                         <path d="M14 10H2v2h12v-2zm0-4H2v2h12V6zm4 8v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM2 16h8v-2H2v2z" />
                     </svg>
@@ -150,13 +151,13 @@
                     <label for="es-edit-room-input"> Edit Name: </label>
                 </div>
                 <input name="es-edit-room-input" aria-label="Enter New Room Name" class="input-inline-edit-btns"
-                    placeholder="Groud Room" [value]="editRoomForm.get('selectRoomForEdit').value" type="text"
+                    placeholder="Kitchen" [value]="editRoomForm.get('selectRoomForEdit').value" type="text"
                     formControlName="editedRoomName"
                     [ngClass]="{'text-danger error-input': editRoomForm.get('editedRoomName').invalid && editRoomForm.get('editedRoomName').touched}">
                 <button aria-label="Edit Home" title="Edit Home" (click)="editRoomClick()"
                     [disabled]="editRoomForm.get('editedRoomName').invalid || editRoomForm.get('selectHomeForEdit').invalid || disableSubmitBtn || !connectionStatus"
-                    type="submit" class="es-add-storage-button btn btn-primary">
-                    <svg class="icon-white" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 22 18"
+                    type="submit" class="btn-inline-form-input btn btn-primary">
+                    <svg class="icon-white" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 21"
                         width="24">
                         <path
                             d="M2 12.88V16h3.12L14 7.12 10.88 4 2 12.88zm14.76-8.51c.33-.33.33-.85 0-1.18l-1.95-1.95c-.33-.33-.85-.33-1.18 0L12 2.88 15.12 6l1.64-1.63z" />
@@ -164,8 +165,8 @@
                 </button>
                 <button aria-label="Delete Home" title="Delete Home"
                     [disabled]=" editRoomForm.get('selectHomeForEdit').invalid || disableSubmitBtn || !connectionStatus"
-                    (click)="removeRoomClick()" class="es-add-storage-button btn btn-danger">
-                    <svg class="icon-white" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="2 2 24 22"
+                    (click)="removeRoomClick()" class="btn-inline-form-input btn btn-danger">
+                    <svg class="icon-white" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="3 2 24 24"
                         width="24">
                         <path
                             d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm2.46-7.12l1.41-1.41L12 12.59l2.12-2.12 1.41 1.41L13.41 14l2.12 2.12-1.41 1.41L12 15.41l-2.12 2.12-1.41-1.41L10.59 14l-2.13-2.12zM15.5 4l-1-1h-5l-1 1H5v2h14V4z" />
@@ -174,10 +175,9 @@
             </div>
         </form>
     </div>
-    <div>
-        <!-- <div *ngIf="formToDisplay === 'inventory'"> -->
+    <div *ngIf="formToDisplay === 'inventory'">
         <form autocomplete="off" [formGroup]="addInventoryForm" class="manage-storage-container row mt-2"
-            (ngSubmit)="manageInventoryHandler('add')">
+            (ngSubmit)="addInventoryHandler()">
             <div class="col-6 mt-2">
                 <div>
                     <label for="es-add-inventory-home-select"> Select Home: </label>
@@ -235,13 +235,49 @@
                     [ngClass]="{'text-danger error-input': addInventoryForm.get('landmark').invalid && addInventoryForm.get('landmark').touched}">
                 <button aria-label="Submit add inventory item form" title="Add Inventory Item"
                     [disabled]="addInventoryForm.invalid || disableSubmitBtn || !connectionStatus" type="submit"
-                    class="es-add-storage-button btn btn-primary">
-                    <svg class="icon-white" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24"
+                    class="btn-inline-form-input btn btn-primary">
+                    <svg class="icon-white" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 2 24 24"
                         width="24">
                         <path d="M14 10H2v2h12v-2zm0-4H2v2h12V6zm4 8v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zM2 16h8v-2H2v2z" />
                     </svg>
                 </button>
             </div>
+        </form>
+    </div>
+    <div *ngIf="formToDisplay === 'manage-inventory'">
+        <div *ngIf="!uuidInQuery">
+            <form #inventoryUUIDForm="ngForm" *ngIf="!uuidInQuery" class="manage-storage-container row mt-4"
+                (ngSubmit)="searchInventoryByIdClick()">
+                <div class="col-12">
+                    <div>
+                        <label for="es-edit-inventory-uuid-input"> Enter Item UUID: </label>
+                    </div>
+                    <input name="es-edit-inventory-uuid-input" aria-label="Enter Inventory Item UUID"
+                        class="input-inline-submit-btn" placeholder="4e9e0c52bce3bacb29f291c7097c828c"
+                        [formControl]="inventoryItemUUIDForEdit"
+                        [ngClass]="{'text-danger error-input': inventoryItemUUIDForEdit.invalid && inventoryItemUUIDForEdit.touched}">
+                    <button aria-label="Search in Inventory" title="Search in Inventory"
+                        [disabled]="inventoryItemUUIDForEdit.invalid || disableSubmitBtn || !connectionStatus"
+                        type="submit" class="btn-inline-form-input btn btn-primary">
+                        <svg class="icon-white" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="3 2 24 24"
+                            width="24">
+                            <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5
+            5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5
+            11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
+                        </svg>
+                    </button>
+                </div>
+            </form>
+            <div class="row justify-content-center">
+                <div class="col-10 text-center text-secondary mb-4 mt-4">
+                    If you do not know the UUID of the inventory item you want to edit, you can
+                    <a [routerLink]=[HOME_PATH]>search</a> for the item and click edit button on the search result to
+                    edit it.
+                </div>
+            </div>
+        </div>
+        <form #editInventoryForm="ngForm" *ngIf="uuidInQuery" class="manage-storage-container row mt-4">
+            Hello: {{ uuidInQuery }}
         </form>
     </div>
 </div>

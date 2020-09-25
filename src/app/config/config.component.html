@@ -1,10 +1,10 @@
 <div class="container mt-4">
     <div class="row">
-        <form #esUrlForm="ngForm" id="es-url-container" (ngSubmit)="esUrlConnectClick()">
+        <form #esUrlForm="ngForm" class="col-12" (ngSubmit)="esUrlConnectClick()">
             <span>
                 <label for="es-url-input"> Enter Elastic Search Server URL: </label>
             </span>
-            <input name="es-url-input" aria-label="elastic-search-url-code" id="es-url-input"
+            <input name="es-url-input" aria-label="Elastic Search Server URL" id="es-url-input"
                 placeholder=" {{ esDefaultUrl }}" type="text" [formControl]="esUrl"
                 [ngClass]="{'text-danger error-input': esUrl.invalid && esUrl.touched}">
             <button aria-label="Connect to Elastic Search server" title="Enter elastic search server"

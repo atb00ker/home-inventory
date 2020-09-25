@@ -14,10 +14,42 @@ label { margin: 0; }
   fill: white;
 }
 
+/* Form Section Styles */
+
+.general-input {
+  font-size: 17px;
+  height: 35px;
+  overflow: hidden;
+  height: 35px;
+  width: 100%;
+  float: left;
+}
+
+.input-inline-submit-btn {
+  @extend .general-input;
+  width: calc(100% - 48px);
+}
+
+.input-inline-edit-btns {
+  @extend .input-inline-submit-btn;
+  width: calc(100% - 96px);
+}
+
 .error-input {
   // Highlight errored form input box.
   border: 2px #d51311 solid!important;
   border-radius: 4px;
+}
+
+.btn-inline-form-input {
+  float: left;
+  width: 44px;
+  font-size: 15px;
+  cursor: pointer;
+  height: 35px !important;
+  border-radius: .25rem;
+  border: 0px;
+  margin-left: 3px;
 }
 
 /* Display Status Section Styles */
