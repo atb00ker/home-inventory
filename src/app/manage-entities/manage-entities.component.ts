@@ -22,15 +22,18 @@ export class ManageEntitiesComponent implements OnInit {
   public formToDisplay = 'none';
   public displayAddStatus = 'none';
   public disableSubmitBtn = false;
+  public uuidMsg: string | Int32Array;
   public successMessage = 'Operation Successful!';
   public errorMessage = 'Unknown Error';
 
   constructor(private titleService: Title, private esService: ElasticSearchService, private route: ActivatedRoute, private router: Router) {
     this.titleService.setTitle("Home Inventory | Add Intentory Items");
     this.route.queryParams.subscribe(params => {
-      this.uuidInQuery = params.uuid;
-      if (this.uuidInQuery) {
+      if (params.uuid) {
         this.formToDisplay = 'manage-inventory';
+        this.getIventoryItemForEdit(params.uuid, params.saved);
+      } else {
+        this.uuidInQuery = null;
       }
     });
   }
@@ -50,6 +53,7 @@ export class ManageEntitiesComponent implements OnInit {
     } else {
       this.displayAddStatus = 'none';
       this.errorMessage = '';
+      this.router.navigate([this.MANAGE_PATH]);
       this.esService.periodicFunctions();
     }
     this.clearAllForms();
@@ -165,6 +169,8 @@ export class ManageEntitiesComponent implements OnInit {
   }
 
   // Manage Inventory Section
+  public filteredRoomListForAddInventoryForm: Array<string>;
+  public filteredRoomListForEditInventoryForm: Array<string>;
   inventoryItemUUIDForEdit = new FormControl('', [Validators.required]);
   addInventoryForm = new FormGroup({
     selectHomeForItem: new FormControl(this.homeList, [Validators.required]),
@@ -182,36 +188,77 @@ export class ManageEntitiesComponent implements OnInit {
     description: new FormControl(''),
     count: new FormControl('', [Validators.pattern("^[0-9]*$")]),
   });
-  public filteredRoomListForAddInventoryForm: Array<string>;
 
   getRoomsForAddInventoryForm() {
     this.filteredRoomListForAddInventoryForm = this.esService
       .getRoomListForHome(this.addInventoryForm.controls.selectHomeForItem.value, this.roomList);
   }
 
-  addInventoryHandler() {
-    let name = this.addInventoryForm.controls.name.value,
-      count = this.addInventoryForm.controls.count.value,
-      description = this.addInventoryForm.controls.description.value,
-      landmark = this.addInventoryForm.controls.landmark.value,
-      room = this.addInventoryForm.controls.selectRoomForItem.value,
-      home = this.addInventoryForm.controls.selectHomeForItem.value,
-      uuid = Md5.hashStr(name + count + description + landmark + home + room),
-      actionPromise = this.esService.manageInventory('add', name, description, count,
-        landmark, room, home, uuid),
-      successMsg = 'Operation to add inventory item completed!';
-    this.actionPromiseHandler(successMsg, actionPromise);
+  getRoomsForEditInventoryForm() {
+    this.filteredRoomListForEditInventoryForm = this.esService
+      .getRoomListForHome(this.editInventoryForm.controls.selectHomeForItem.value, this.roomList);
+  }
+
+  manageInventoryItem(action: string) {
+    let successMsg = 'Operation to ' + action + ' inventory item successful!',
+      form, uuidOld;
+    if (action == 'add') { form = this.addInventoryForm; }
+    else if (action == 'edit') { form = this.editInventoryForm; }
+    let name = form.controls.name.value,
+      count = form.controls.count.value,
+      description = form.controls.description.value,
+      landmark = form.controls.landmark.value,
+      room = form.controls.selectRoomForItem.value,
+      home = form.controls.selectHomeForItem.value,
+      uuid = Md5.hashStr(name + count + description + landmark + home + room);
+    if (action == 'add') { this.uuidMsg = uuid; }
+    else if (action == 'edit') {
+      this.uuidMsg = uuid;
+      uuidOld = this.uuidInQuery;
+    }
+    let actionPromise = this.esService
+      .manageInventory(action, name, description, count, landmark, room, home, uuid, uuidOld);
+    this.actionPromiseHandler(successMsg, actionPromise).then(() => {
+      if (action === 'edit') {
+        this.router.navigate([this.MANAGE_PATH], { queryParams: { uuid: uuid, saved: true } });
+      }
+    });
+  }
+
+  removeInventoryItem() {
+    let actionPromise = this.esService.deleteInventory(this.uuidInQuery),
+      successMsg = 'Operation to delete inventory item successful!';
+    this.actionPromiseHandler(successMsg, actionPromise)
   }
 
   searchInventoryByIdClick() {
     let uuid = this.inventoryItemUUIDForEdit.value;
+    this.router.navigate([this.MANAGE_PATH], { queryParams: { uuid: uuid } })
+  }
+
+  getIventoryItemForEdit(uuid, saved) {
     this.esService.getInventoryItemByUUID(uuid)
-      .then(() => {
-        this.router.navigate([this.MANAGE_PATH], { queryParams: { uuid: uuid } })
-        this.displayAddStatus = 'none';
+      .then(data => {
+        this.uuidInQuery = uuid;
+        if (!saved) {
+          this.displayAddStatus = 'none';
+        }
+        this.editInventoryForm.patchValue({
+          name: data['_source']['name'],
+          count: data['_source']['count'],
+          description: data['_source']['description'],
+          landmark: data['_source']['landmark'],
+          selectHomeForItem: data['_source']['home']
+        });
+        this.getRoomsForEditInventoryForm();
+        this.editInventoryForm.patchValue({
+          selectRoomForItem: data['_source']['room']
+        });
       })
-      .catch(() => {
-        this.errorMessage = 'Error: No such Item with UUID: ' + uuid;
+      .catch(error => {
+        console.error(error);
+        this.router.navigate([this.MANAGE_PATH])
+        this.errorMessage = 'Error ' + error.status + ' - ' + error.statusText;
         this.displayAddStatus = 'error';
       });
   }
@@ -220,7 +267,7 @@ export class ManageEntitiesComponent implements OnInit {
   actionPromiseHandler(successMsg: string, actionPromise: Promise<any>) {
     this.displayAddStatus = 'progress';
     this.disableSubmitBtn = true;
-    actionPromise
+    return actionPromise
       .then(() => {
         this.clearAllForms();
         this.displayAddStatus = 'success';
@@ -229,7 +276,7 @@ export class ManageEntitiesComponent implements OnInit {
       .catch(error => {
         this.displayAddStatus = 'error';
         this.errorMessage = 'Error ' + error.status + ' - ' + error.statusText;
-        console.error('Error: ' + this.errorMessage);
+        console.error(error);
       })
       .finally(() => this.disableSubmitBtn = false);
   }
@@ -240,5 +287,7 @@ export class ManageEntitiesComponent implements OnInit {
     this.addRoomForm.reset();
     this.editRoomForm.reset();
     this.addInventoryForm.reset();
+    this.editInventoryForm.reset();
+    this.inventoryItemUUIDForEdit.reset();
   }
 }

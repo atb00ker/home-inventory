@@ -75,4 +75,8 @@ export class HomeComponent implements OnInit {
   editInventoryRequest(uuid: string) {
     this.router.navigate([this.MANAGE_PATH], { queryParams: { uuid: uuid } })
   }
+
+  showCollapsedInformation(uuid) {
+    return document.getElementById(uuid).classList.toggle('show');
+  }
 }

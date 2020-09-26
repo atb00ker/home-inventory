@@ -71,32 +71,31 @@
                                 x{{ searchedItem._source.count }}
                             </div>
                         </div>
-                        <button id="id{{ searchedItem._id }}" class="btn btn-primary btn-result-full-show"
-                            data-toggle="collapse" [attr.data-target]="'#' + searchedItem._id" aria-expanded="false"
-                            [attr.aria-controls]="searchedItem._id">
+                        <button (click)="showCollapsedInformation(searchedItem._id);"
+                            class="btn btn-primary btn-result-full-show">
                             <svg class="icon-white" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="3 2 15 15"
                                 width="24">
                                 <path
                                     d="M9 4.12l2.38 2.38 1.06-1.06L9 2 5.56 5.44 6.62 6.5 9 4.12zm0 9.76L6.62 11.5l-1.06 1.06L9 16l3.44-3.44-1.06-1.06L9 13.88z" />
                             </svg>
                         </button>
-                        <div id="{{ searchedItem._id }}" class="collapse collapsed"
-                            [attr.aria-labelledby]="'id' + searchedItem._id"
-                            [attr.data-parent]="'#parentId' + searchedItem._id">
-                            {{ searchedItem._source.description }}
+                        <div id="{{ searchedItem._id }}" class="collapse collapsed">
+                            <div class="table-data">
+                                {{ searchedItem._source.description }}
+                            </div>
                             <hr>
                             <table class="table-text-row">
                                 <tr>
                                     <th>Landmark</th>
-                                    <td>{{ searchedItem._source.landmark }}</td>
+                                    <td class="table-data">{{ searchedItem._source.landmark }}</td>
                                 </tr>
                                 <tr>
                                     <th>Home</th>
-                                    <td>{{ searchedItem._source.home }}</td>
+                                    <td class="table-data">{{ searchedItem._source.home }}</td>
                                 </tr>
                                 <tr>
                                     <th>Room</th>
-                                    <td>{{ searchedItem._source.room }}</td>
+                                    <td class="table-data">{{ searchedItem._source.room }}</td>
                                 </tr>
                             </table>
                             <button aria-label="Edit Inventory Item" title="Edit Inventory Item"

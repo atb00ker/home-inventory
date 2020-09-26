@@ -11,7 +11,9 @@
                 Progress: Sending information to elastic search server...
             </div>
             <div *ngIf="displayAddStatus === 'success'" class="display-status-success">
-                Success: {{ successMessage }}
+                Success:
+                {{ successMessage }} <br>
+                UUID: {{ uuidMsg }}
             </div>
         </div>
     </div>
@@ -35,7 +37,7 @@
         <form #addHomeForm="ngForm" class="manage-storage-container row mt-4" (ngSubmit)="addHomeClick()">
             <div class="col-12">
                 <div>
-                    <label for="es-add-home-input"> Add Home: </label>
+                    <label for="es-edit-home-input"> Add Home: </label>
                 </div>
                 <input name="es-add-home-input" aria-label="Enter Home Name to Add" class="input-inline-submit-btn"
                     placeholder="Sweet Home" type="text" [formControl]="addHome"
@@ -177,7 +179,7 @@
     </div>
     <div *ngIf="formToDisplay === 'inventory'">
         <form autocomplete="off" [formGroup]="addInventoryForm" class="manage-storage-container row mt-2"
-            (ngSubmit)="addInventoryHandler()">
+            (ngSubmit)="manageInventoryItem('add')">
             <div class="col-6 mt-2">
                 <div>
                     <label for="es-add-inventory-home-select"> Select Home: </label>
@@ -276,8 +278,82 @@
                 </div>
             </div>
         </div>
-        <form #editInventoryForm="ngForm" *ngIf="uuidInQuery" class="manage-storage-container row mt-4">
-            Hello: {{ uuidInQuery }}
+        <form [formGroup]="editInventoryForm" *ngIf="uuidInQuery" class="manage-storage-container row mt-4">
+            <div class="col-6 mt-2">
+                <div>
+                    <label for="es-edit-inventory-home-select"> Select Home: </label>
+                </div>
+                <select name="es-edit-inventory-home-select" formControlName="selectHomeForItem" class="form-control"
+                    (change)="getRoomsForEditInventoryForm()"
+                    [ngClass]="{'text-danger error-input': editInventoryForm.get('selectHomeForItem').invalid && editInventoryForm.get('selectHomeForItem').touched}">
+                    <option selected disabled value> -- Select Home -- </option>
+                    <option *ngFor="let home of homeList" [ngValue]="home">{{ home }}</option>
+                </select>
+            </div>
+            <div class="col-6 mt-2">
+                <div>
+                    <label for="es-edit-inventory-room-select"> Select Room: </label>
+                </div>
+                <select name="es-edit-inventory-room-select" formControlName="selectRoomForItem" class="form-control"
+                    [ngClass]="{'text-danger error-input': editInventoryForm.get('selectRoomForItem').invalid && editInventoryForm.get('selectRoomForItem').touched}">
+                    <option selected disabled value> -- Select Room -- </option>
+                    <option *ngFor="let room of filteredRoomListForEditInventoryForm" [ngValue]="room">{{ room }}
+                    </option>
+                </select>
+            </div>
+            <div class="col-6 mt-2">
+                <div>
+                    <label for="es-edit-inventory-name-input"> Item Name: </label>
+                </div>
+                <input name="es-edit-inventory-name-input" aria-label="Enter Inventory Item Name" class="general-input"
+                    placeholder="LG Nexus 5" data-lpignore="true" type="text" formControlName="name"
+                    [ngClass]="{'text-danger error-input': editInventoryForm.get('name').invalid && editInventoryForm.get('name').touched}">
+            </div>
+            <div class="col-6 mt-2">
+                <div>
+                    <label for="es-edit-inventory-count-input"> Item Count: </label>
+                </div>
+                <input name="es-edit-inventory-count-input" aria-label="Enter Inventory Item Count"
+                    class="general-input" data-lpignore="true" placeholder="1" type="text" formControlName="count"
+                    [ngClass]="{'text-danger error-input': editInventoryForm.get('count').invalid && editInventoryForm.get('count').touched}">
+            </div>
+            <div class="col-12 mt-2">
+                <div>
+                    <label for="es-edit-inventory-description-input"> Item Description: </label>
+                </div>
+                <input name="es-edit-inventory-description-input" aria-label="Enter Inventory Item Description"
+                    class="general-input" data-lpignore="true" placeholder="Old Phone, Working Condition" type="text"
+                    formControlName="description"
+                    [ngClass]="{'text-danger error-input': editInventoryForm.get('description').invalid && editInventoryForm.get('description').touched}">
+            </div>
+            <div class="col-12 mt-2">
+                <div>
+                    <label for="es-edit-inventory-landmark-input"> Item Landmark: </label>
+                </div>
+                <input name="es-edit-inventory-landmark-input" aria-label="Enter Inventory Item Landmark"
+                    class="input-inline-edit-btns" data-lpignore="true" placeholder="Blue Wardrobe" type="text"
+                    formControlName="landmark"
+                    [ngClass]="{'text-danger error-input': editInventoryForm.get('landmark').invalid && editInventoryForm.get('landmark').touched}">
+                <button aria-label="Edit Intentory Item" title="Edit Intentory Item"
+                    (click)="manageInventoryItem('edit')"
+                    [disabled]="editInventoryForm.invalid || disableSubmitBtn || !connectionStatus" type="submit"
+                    class="btn-inline-form-input btn btn-primary">
+                    <svg class="icon-white" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 21"
+                        width="24">
+                        <path
+                            d="M2 12.88V16h3.12L14 7.12 10.88 4 2 12.88zm14.76-8.51c.33-.33.33-.85 0-1.18l-1.95-1.95c-.33-.33-.85-.33-1.18 0L12 2.88 15.12 6l1.64-1.63z" />
+                    </svg>
+                </button>
+                <button aria-label="Delete Intentory Item" title="Delete Intentory Item"
+                    [disabled]="editInventoryForm.invalid || disableSubmitBtn || !connectionStatus"
+                    (click)="removeInventoryItem()" class="btn-inline-form-input btn btn-danger">
+                    <svg class="icon-white" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="3 2 24 24"
+                        width="24">
+                        <path
+                            d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm2.46-7.12l1.41-1.41L12 12.59l2.12-2.12 1.41 1.41L13.41 14l2.12 2.12-1.41 1.41L12 15.41l-2.12 2.12-1.41-1.41L10.59 14l-2.13-2.12zM15.5 4l-1-1h-5l-1 1H5v2h14V4z" />
+                    </svg>
+                </button>
+            </div>
         </form>
     </div>
 </div>

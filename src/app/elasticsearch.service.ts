@@ -123,7 +123,7 @@ export class ElasticSearchService {
   }
 
   editLocation(fieldName: string, itemName: string, newName: string): Promise<any> {
-    return this.removeLocation(fieldName, itemName).then(() => this.addLocation(fieldName, newName));
+    return this.addLocation(fieldName, newName).then(() => this.removeLocation(fieldName, itemName));
   }
 
   removeLocation(fieldName: string, itemName: string): Promise<any> {
@@ -140,16 +140,15 @@ export class ElasticSearchService {
 
   // Manage Inventory
   manageInventory(action: string, name: string, description: string, count: number,
-    landmark: string, room: string, home: string, uuid: string | Int32Array): Promise<any> {
+    landmark: string, room: string, home: string,
+    uuid: string | Int32Array, uuidOld: string | Int32Array): Promise<any> {
+
     if (action == 'add')
-      return this.addInventory(name, description, count, landmark, room, home, uuid)
-        .then(() => this._getStorageMetaData());
+      return this.addInventory(name, description, count, landmark, room, home, uuid);
     else if (action == 'delete')
-      return this.deleteInventory(name, description, count, landmark, room, home, uuid)
-        .then(() => this._getStorageMetaData());
+      return this.deleteInventory(uuid);
     else if (action == 'edit')
-      return this.editInventory(name, description, count, landmark, room, home, uuid)
-        .then(() => this._getStorageMetaData());
+      return this.editInventory(name, description, count, landmark, room, home, uuid, uuidOld);
   }
 
   addInventory(name: string, description: string, count: number, landmark: string,
@@ -166,13 +165,17 @@ export class ElasticSearchService {
     return this.http.put(path, data, { headers: this.jsonHttpheaders }).toPromise();
   }
 
-  deleteInventory(name: string, description: string, count: number,
-    landmark: string, room: string, home: string, uuid: string | Int32Array): Promise<any> {
-    return this.http.get(this.cookieService.get('es-server')).toPromise();
+  deleteInventory(uuid: string | Int32Array): Promise<any> {
+    let path = this.cookieService.get('es-server') + '/inventory/_doc/' + uuid;
+    return this.http.delete(path).toPromise();
   }
+
   editInventory(name: string, description: string, count: number,
-    landmark: string, room: string, home: string, uuid: string | Int32Array): Promise<any> {
-    return this.http.get(this.cookieService.get('es-server')).toPromise();
+    landmark: string, room: string, home: string,
+    uuid: string | Int32Array, uuidOld: string | Int32Array): Promise<any> {
+
+    return this.addInventory(name, description, count, landmark, room, home, uuid)
+      .then(() => this.deleteInventory(uuidOld));
   }
 
   getInventoryItemByUUID(uuid: string) {
