@@ -175,18 +175,21 @@ export class ManageEntitiesComponent implements OnInit {
   addInventoryForm = new FormGroup({
     selectHomeForItem: new FormControl(this.homeList, [Validators.required]),
     selectRoomForItem: new FormControl(this.roomList, [Validators.required]),
-    name: new FormControl('', [Validators.required]),
-    landmark: new FormControl(''),
-    description: new FormControl(''),
+    name: new FormControl('', [Validators.required, Validators.pattern('^[^"]+$')]),
+    landmark: new FormControl('', [Validators.pattern('^[^"]+$')]),
+    description: new FormControl('', [Validators.pattern('^[^"]+$')]),
     count: new FormControl('', [Validators.pattern("^[0-9]*$")]),
+    image: new FormControl(''),
   });
   editInventoryForm = new FormGroup({
     selectHomeForItem: new FormControl(this.homeList, [Validators.required]),
     selectRoomForItem: new FormControl(this.roomList, [Validators.required]),
-    name: new FormControl('', [Validators.required]),
-    landmark: new FormControl(''),
-    description: new FormControl(''),
+    name: new FormControl('', [Validators.required, Validators.pattern('^[^"]+$')]),
+    landmark: new FormControl('', [Validators.pattern('^[^"]+$')]),
+    description: new FormControl('', [Validators.pattern('^[^"]+$')]),
     count: new FormControl('', [Validators.pattern("^[0-9]*$")]),
+    imageExist: new FormControl(''),
+    image: new FormControl(''),
   });
 
   getRoomsForAddInventoryForm() {
@@ -201,28 +204,40 @@ export class ManageEntitiesComponent implements OnInit {
 
   manageInventoryItem(action: string) {
     let successMsg = 'Operation to ' + action + ' inventory item successful!',
-      form, uuidOld;
+      form, uuidOld, image, imageExist;
     if (action == 'add') { form = this.addInventoryForm; }
     else if (action == 'edit') { form = this.editInventoryForm; }
     let name = form.controls.name.value,
-      count = form.controls.count.value,
-      description = form.controls.description.value,
-      landmark = form.controls.landmark.value,
+      count = form.controls.count.value ? form.controls.count.value : 0,
+      description = form.controls.description.value ? form.controls.description.value : '',
+      landmark = form.controls.landmark.value ? form.controls.landmark.value : '',
       room = form.controls.selectRoomForItem.value,
       home = form.controls.selectHomeForItem.value,
       uuid = Md5.hashStr(name + count + description + landmark + home + room);
-    if (action == 'add') { this.uuidMsg = uuid; }
-    else if (action == 'edit') {
-      this.uuidMsg = uuid;
-      uuidOld = this.uuidInQuery;
+    this.uuidMsg = uuid;
+    if (action == 'edit') { uuidOld = this.uuidInQuery; }
+    let actionPromise = this.loadInventoryImageFile()
+      .then(data => {
+        image = data ? data : null;
+        if (action == 'add') { imageExist = image ? true : false; }
+        else if (action == 'edit') { imageExist = form.controls.imageExist.value; }
+        this.esService.manageInventory(action, uuid, name, description, count,
+          landmark, room, home, uuidOld, image, imageExist);
+      })
+    this.actionPromiseHandler(successMsg, actionPromise);
+  }
+
+  loadInventoryImageFile(): Promise<string> {
+    let fileInfo = (<HTMLInputElement>document.getElementById("es-inventory-file-input")).files[0];
+    if (fileInfo) {
+      return new Promise((resolve, reject) => {
+        let fileReader = new FileReader();
+        fileReader.readAsDataURL(fileInfo);
+        fileReader.onload = () => resolve(fileReader.result.toString());
+        fileReader.onerror = () => reject('');
+      });
     }
-    let actionPromise = this.esService
-      .manageInventory(action, name, description, count, landmark, room, home, uuid, uuidOld);
-    this.actionPromiseHandler(successMsg, actionPromise).then(() => {
-      if (action === 'edit') {
-        this.router.navigate([this.MANAGE_PATH], { queryParams: { uuid: uuid, saved: true } });
-      }
-    });
+    return new Promise(resolve => resolve(''));
   }
 
   removeInventoryItem() {
@@ -248,7 +263,8 @@ export class ManageEntitiesComponent implements OnInit {
           count: data['_source']['count'],
           description: data['_source']['description'],
           landmark: data['_source']['landmark'],
-          selectHomeForItem: data['_source']['home']
+          selectHomeForItem: data['_source']['home'],
+          imageExist: data['_source']['imageExist'],
         });
         this.getRoomsForEditInventoryForm();
         this.editInventoryForm.patchValue({
@@ -261,6 +277,22 @@ export class ManageEntitiesComponent implements OnInit {
         this.errorMessage = 'Error ' + error.status + ' - ' + error.statusText;
         this.displayAddStatus = 'error';
       });
+  }
+  deleteInventoryImage() {
+    this.displayAddStatus = 'progress';
+    this.disableSubmitBtn = true;
+    this.esService.deleteInventoryImage(this.uuidInQuery)
+      .then(() => {
+        this.displayAddStatus = 'success';
+        this.successMessage = 'Image for inventory item deleted successfully!';
+        this.editInventoryForm.patchValue({ imageExist: false });
+      })
+      .catch(error => {
+        this.displayAddStatus = 'error';
+        this.errorMessage = 'Image for inventory item deletion failed!';
+        console.error(error);
+      })
+      .finally(() => this.disableSubmitBtn = false);
   }
 
   // Utility Functions

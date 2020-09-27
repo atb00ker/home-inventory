@@ -11,8 +11,8 @@ import { FormGroup } from '@angular/forms';
   providedIn: 'root',
 })
 export class ElasticSearchService {
-  private pathToUpdateMetadata = '/meta/_update/storage';
-  private pathToMetadata = '/meta/_doc/storage';
+  private pathToUpdateMetadata = '/inventory-data/_update/metadata';
+  private pathToMetadata = '/inventory-data/_doc/metadata';
   private jsonHttpheaders = new HttpHeaders({ 'Content-type': 'application/json' });
   private status = new BehaviorSubject(false);
   private homeList = new BehaviorSubject([]);
@@ -74,7 +74,8 @@ export class ElasticSearchService {
             "count": { "type": "short" },
             "home": { "type": "keyword" },
             "room": { "type": "keyword" },
-            "landmark": { "type": "text" }
+            "landmark": { "type": "text" },
+            "imageExist": { "type": "boolean" }
           }
         }
       }`
@@ -139,47 +140,74 @@ export class ElasticSearchService {
   }
 
   // Manage Inventory
-  manageInventory(action: string, name: string, description: string, count: number,
-    landmark: string, room: string, home: string,
-    uuid: string | Int32Array, uuidOld: string | Int32Array): Promise<any> {
-
+  manageInventory(action: string, uuid: string | Int32Array, name: string, description: string, count: number,
+    landmark: string, room: string, home: string, uuidOld: string | Int32Array,
+    image: string | null, imageExist: boolean): Promise<any> {
     if (action == 'add')
-      return this.addInventory(name, description, count, landmark, room, home, uuid);
-    else if (action == 'delete')
+      return this.addInventory(uuid, name, description, count, landmark, room, home, image, imageExist);
+    else if (action == 'delete') {
+      this.deleteInventoryImage(uuid);
       return this.deleteInventory(uuid);
+    }
     else if (action == 'edit')
-      return this.editInventory(name, description, count, landmark, room, home, uuid, uuidOld);
+      return this.editInventory(uuid, name, description, count, landmark, room, home, uuidOld, image, imageExist);
   }
 
-  addInventory(name: string, description: string, count: number, landmark: string,
-    room: string, home: string, uuid: string | Int32Array): Promise<any> {
+  addInventory(uuid: string | Int32Array, name: string, description: string, count: number,
+    landmark: string, room: string, home: string, image: string | null, imageExist: boolean): Promise<any> {
     let path = this.cookieService.get('es-server') + '/inventory/_create/' + uuid,
+      imgPath = this.cookieService.get('es-server') + '/inventory-images/_create/' + uuid,
+      imgData = '{"image": "' + image + '" }',
       data = `{
         "name": "` + name + `",
         "description": "` + description + `",
         "count": ` + count + `,
         "landmark": "` + landmark + `",
         "room": "` + room + `",
-        "home": "` + home + `"
-      }`
-    return this.http.put(path, data, { headers: this.jsonHttpheaders }).toPromise();
+        "home": "` + home + `",
+        "imageExist": ` + imageExist + `
+      }`;
+    return this.http.put(path, data, { headers: this.jsonHttpheaders }).toPromise()
+      .then(() => {
+        if (imageExist) {
+          this.http.put(imgPath, imgData, { headers: this.jsonHttpheaders }).toPromise();
+        }
+      });
+  }
+
+  deleteInventoryImage(uuid: string | Int32Array): Promise<any> {
+    let imgPath = this.cookieService.get('es-server') + '/inventory-images/_doc/' + uuid;
+    return this.http.get(imgPath).toPromise()
+      .then(() => {
+        let bulkUrl = this.cookieService.get('es-server') + '/_bulk';
+        let bulkData = '{ "delete" : { "_index" : "inventory-images", "_id" : "' + uuid + '" } }\n' +
+          '{ "update" : { "_id" : "' + uuid + '", "_index" : "inventory" } }\n' +
+          '{ "doc" : { "imageExist": false } }\n';
+        this.http.post(bulkUrl, bulkData, { headers: this.jsonHttpheaders }).toPromise();
+      })
+      .catch(() => { })
   }
 
   deleteInventory(uuid: string | Int32Array): Promise<any> {
     let path = this.cookieService.get('es-server') + '/inventory/_doc/' + uuid;
-    return this.http.delete(path).toPromise();
+    return this.http.delete(path).toPromise()
   }
 
-  editInventory(name: string, description: string, count: number,
+  editInventory(uuid: string | Int32Array, name: string, description: string, count: number,
     landmark: string, room: string, home: string,
-    uuid: string | Int32Array, uuidOld: string | Int32Array): Promise<any> {
+    uuidOld: string | Int32Array, image: string | null, imageExist): Promise<any> {
 
-    return this.addInventory(name, description, count, landmark, room, home, uuid)
-      .then(() => this.deleteInventory(uuidOld));
+    return this.deleteInventory(uuidOld)
+      .then(() => this.addInventory(uuid, name, description, count, landmark, room, home, image, imageExist));
   }
 
   getInventoryItemByUUID(uuid: string) {
     let url = this.cookieService.get('es-server') + '/inventory/_doc/' + uuid;
+    return this.http.get(url).toPromise();
+  }
+
+  getInventoryItemImage(uuid: string) {
+    let url = this.cookieService.get('es-server') + '/inventory-images/_doc/' + uuid;
     return this.http.get(url).toPromise();
   }
 

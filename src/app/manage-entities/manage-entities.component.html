@@ -12,8 +12,11 @@
             </div>
             <div *ngIf="displayAddStatus === 'success'" class="display-status-success">
                 Success:
-                {{ successMessage }} <br>
-                UUID: {{ uuidMsg }}
+                {{ successMessage }}
+                <span *ngIf="uuidMsg">
+                    <br>
+                    UUID: {{ uuidMsg }}
+                </span>
             </div>
         </div>
     </div>
@@ -227,7 +230,12 @@
                     formControlName="description"
                     [ngClass]="{'text-danger error-input': addInventoryForm.get('description').invalid && addInventoryForm.get('description').touched}">
             </div>
-            <div class="col-12 mt-2">
+            <div class="col-6 mt-2">
+                <label for="es-add-inventory-file-input">Item Image: </label>
+                <input type="file" class="input-inline-submit-btn" name="es-add-inventory-file-input"
+                    id="es-inventory-file-input" formControlName="image">
+            </div>
+            <div class="col-6 mt-2">
                 <div>
                     <label for="es-add-inventory-landmark-input"> Item Landmark: </label>
                 </div>
@@ -326,7 +334,21 @@
                     formControlName="description"
                     [ngClass]="{'text-danger error-input': editInventoryForm.get('description').invalid && editInventoryForm.get('description').touched}">
             </div>
-            <div class="col-12 mt-2">
+            <div class="col-6 mt-2">
+                <label for="es-edit-inventory-file-input">Item Image: </label>
+                <input type="file" class="input-inline-submit-btn" name="es-edit-inventory-file-input"
+                    id="es-inventory-file-input" formControlName="image">
+                <button *ngIf="editInventoryForm.get('imageExist').value" aria-label="Delete Existing Image"
+                    title="Delete Existing Image" (click)="deleteInventoryImage()"
+                    [disabled]="editInventoryForm.invalid || disableSubmitBtn || !connectionStatus" type="submit"
+                    class="btn-inline-form-input btn btn-danger">
+                    <svg class="icon-white" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="3 2 24 24"
+                        width="24">
+                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
+                    </svg>
+                </button>
+            </div>
+            <div class="col-6 mt-2">
                 <div>
                     <label for="es-edit-inventory-landmark-input"> Item Landmark: </label>
                 </div>

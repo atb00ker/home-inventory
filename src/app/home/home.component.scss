@@ -46,9 +46,10 @@
 .table-text-row {
   display: inline-table;
   width: calc(100% - 48px);
+  margin-bottom: 10px;
 }
 
-.table-data {
+.collapsed-data {
   padding: 10px;
   line-height: 1.3;
 }
@@ -76,4 +77,68 @@
 
 .short-description {
   overflow: hidden;
+}
+
+.item-show-image {
+  color: #00b8d2;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+/*****************
+Show Item Image
+*****************/
+
+#image-model-container {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1; /* Sit on top */
+  padding-top: 100px; /* Location of the box */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgb(0,0,0); /* Fallback color */
+  background-color: rgba(0,0,0,0.9); /* Black w/ opacity */
+}
+
+#image-model {
+  margin: auto;
+  display: block;
+  width: 80%;
+  max-width: 700px;
+  -webkit-animation-name: zoom;
+  -webkit-animation-duration: 0.6s;
+  animation-name: zoom;
+  animation-duration: 0.6s;
+}
+
+// Animations
+@-webkit-keyframes zoom {
+  from {-webkit-transform:scale(0)}
+  to {-webkit-transform:scale(1)}
+}
+
+@keyframes zoom {
+  from {transform:scale(0)}
+  to {transform:scale(1)}
+}
+
+/* The Close Button */
+#image-model-close {
+  position: absolute;
+  top: 15px;
+  right: 35px;
+  color: #f1f1f1;
+  font-size: 40px;
+  font-weight: bold;
+  transition: 0.3s;
+}
+
+#image-model-close:hover,
+#image-model-close:focus {
+  color: #bbb;
+  text-decoration: none;
+  cursor: pointer;
 }

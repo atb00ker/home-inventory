@@ -79,4 +79,23 @@ export class HomeComponent implements OnInit {
   showCollapsedInformation(uuid) {
     return document.getElementById(uuid).classList.toggle('show');
   }
+
+  showItemImage(uuid) {
+    this.esService.getInventoryItemImage(uuid)
+      .then(data => {
+        let modal = <HTMLImageElement>document.getElementById("image-model-container");
+        let modalImage = <HTMLImageElement>document.getElementById("image-model");
+        modal.style.display = "block";
+        modalImage.src = data["_source"]["image"];
+      })
+      .catch(error => {
+        console.error(error);
+        alert("Unable to open image" + error);
+      });
+  }
+
+  hideModelBtn() {
+    let modal = <HTMLImageElement>document.getElementById("image-model-container");
+    modal.style.display = "none";
+  }
 }

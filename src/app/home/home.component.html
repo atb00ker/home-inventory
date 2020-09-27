@@ -67,7 +67,7 @@
                             <div class="d-none d-sm-none d-md-block col-md-4">
                                 {{ searchedItem._source.room }}
                             </div>
-                            <div class="d-none d-sm-none d-md-block col-md-2">
+                            <div *ngIf="searchedItem._source.count" class="d-none d-sm-none d-md-block col-md-2">
                                 x{{ searchedItem._source.count }}
                             </div>
                         </div>
@@ -80,33 +80,41 @@
                             </svg>
                         </button>
                         <div id="{{ searchedItem._id }}" class="collapse collapsed">
-                            <div class="table-data">
+                            <div class="collapsed-data">
                                 {{ searchedItem._source.description }}
                             </div>
-                            <hr>
-                            <table class="table-text-row">
-                                <tr>
-                                    <th>Landmark</th>
-                                    <td class="table-data">{{ searchedItem._source.landmark }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Home</th>
-                                    <td class="table-data">{{ searchedItem._source.home }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Room</th>
-                                    <td class="table-data">{{ searchedItem._source.room }}</td>
-                                </tr>
-                            </table>
+                            <button *ngIf="searchedItem._source.imageExist" (click)="showItemImage(searchedItem._id)"
+                                class="btn btn-info btn-result-full-show">
+                                <svg class="icon-white" xmlns="http://www.w3.org/2000/svg" height="24"
+                                    viewBox="2 0 24 24" width="24">
+                                    <path
+                                        d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
+                                </svg>
+                            </button>
                             <button aria-label="Edit Inventory Item" title="Edit Inventory Item"
                                 (click)="editInventoryRequest(searchedItem._id)" type="submit"
                                 class="btn btn-primary btn-result-full-show">
                                 <svg class="icon-white" xmlns="http://www.w3.org/2000/svg" height="24"
-                                    viewBox="0 0 24 21" width="24">
+                                    viewBox="0 0 22 18" width="24">
                                     <path
                                         d="M2 12.88V16h3.12L14 7.12 10.88 4 2 12.88zm14.76-8.51c.33-.33.33-.85 0-1.18l-1.95-1.95c-.33-.33-.85-.33-1.18 0L12 2.88 15.12 6l1.64-1.63z" />
                                 </svg>
                             </button>
+                            <hr>
+                            <table class="table-text-row">
+                                <tr>
+                                    <th>Landmark</th>
+                                    <td class="collapsed-data">{{ searchedItem._source.landmark }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Home</th>
+                                    <td class="collapsed-data">{{ searchedItem._source.home }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Room</th>
+                                    <td class="collapsed-data">{{ searchedItem._source.room }}</td>
+                                </tr>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -121,5 +129,10 @@
                 Progress: Getting information from database...
             </div>
         </div>
+    </div>
+    <!-- Show Image of selected element -->
+    <div id="image-model-container">
+        <span (click)="hideModelBtn()" id="image-model-close">&times;</span>
+        <img id="image-model">
     </div>
 </div>
