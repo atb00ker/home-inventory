@@ -1,9 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
-import { Validators } from '@angular/forms';
 import { Title } from "@angular/platform-browser";
 import { AppRoutes } from '../app.routes';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 // Home Inventory
 import { ElasticSearchService } from '../elasticsearch.service';
 import { JsonValidator } from '../app.validators';
@@ -28,8 +27,18 @@ export class HomeComponent implements OnInit {
   public disableConnectBtn = false;
   public errorMsg: string;
 
-  constructor(private titleService: Title, private esService: ElasticSearchService, private router: Router) {
+  constructor(private titleService: Title, private esService: ElasticSearchService, private router: Router, private route: ActivatedRoute) {
     this.titleService.setTitle("Home Inventory | Manage your Home");
+    this.route.queryParams.subscribe(params => {
+      if (params.query) {
+        this.searchForm.patchValue({
+          searchQuery: params.query,
+          searchInHome: params.home ? params.home : '',
+          searchInRoom: params.room ? params.room : ''
+        });
+        this.searchFormClick();
+      }
+    });
   }
 
   // Page Form

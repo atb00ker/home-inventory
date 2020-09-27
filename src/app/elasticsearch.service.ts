@@ -115,28 +115,39 @@ export class ElasticSearchService {
       ctx_source = `ctx._source.` + fieldName,
       addToList = ctx_source + `.add('` + itemName + `');`,
       distinctFilter = ctx_source + `=` + ctx_source + `.stream().distinct().collect(Collectors.toList())`,
-      data = `{
-      "script" : {
-        "source": "`+ addToList + distinctFilter + `"
-      }
-    }`
+      data = '{ "script" : { "source": "' + addToList + distinctFilter + '" }}'
     return this.http.post(path, data, { headers: this.jsonHttpheaders }).toPromise();
   }
 
   editLocation(fieldName: string, itemName: string, newName: string): Promise<any> {
-    return this.addLocation(fieldName, newName).then(() => this.removeLocation(fieldName, itemName));
+    return this.addLocation(fieldName, newName)
+      .then(() => {
+        let realItemName = fieldName == 'room' ? itemName.split('::')[1] : itemName,
+          realNewName = fieldName == 'room' ? newName.split('::')[1] : newName,
+          updatePath = this.cookieService.get('es-server') + '/inventory/_update_by_query',
+          updateData = `{ "query": { "term": { "` + fieldName + `": "` + realItemName + `" }},
+      "script": "ctx._source.` + fieldName + ` = '` + realNewName + `'" }`;
+        this.http.post(updatePath, updateData, { headers: this.jsonHttpheaders }).toPromise();
+        this.removeLocation(fieldName, itemName, false);
+      });
   }
 
-  removeLocation(fieldName: string, itemName: string): Promise<any> {
+  removeLocation(fieldName: string, itemName: string, deleteItems: boolean = true): Promise<any> {
     let path = this.cookieService.get('es-server') + this.pathToUpdateMetadata,
       ctx_source = `ctx._source.` + fieldName,
       removeFromList = ctx_source + `.remove(` + ctx_source + `.indexOf('` + itemName + `'));`,
-      data = `{
-      "script" : {
-        "source": "`+ removeFromList + `"
-      }
-    }`
-    return this.http.post(path, data, { headers: this.jsonHttpheaders }).toPromise();
+      data = '{ "script" : { "source": "' + removeFromList + '" }}',
+      metaDataPromise = this.http.post(path, data,
+        { headers: this.jsonHttpheaders }).toPromise(), inventoryPromise;
+    if (deleteItems) {
+      let realItemName = fieldName == 'room' ? itemName.split('::')[1] : itemName,
+        deletePath = this.cookieService.get('es-server') + '/inventory/_delete_by_query',
+        deleteQuery = '{"query": { "bool": { "must": [{ "term": { "' +
+          fieldName + '": "' + realItemName + '" }} ]}}}';
+      inventoryPromise = this.http.post(deletePath, deleteQuery,
+        { headers: this.jsonHttpheaders }).toPromise();
+    }
+    return Promise.all([metaDataPromise, inventoryPromise]);
   }
 
   // Manage Inventory

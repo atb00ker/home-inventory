@@ -60,7 +60,7 @@ export class ManageEntitiesComponent implements OnInit {
   }
 
   // Manage Homes Section
-  addHome = new FormControl('', [Validators.required]);
+  addHome = new FormControl('', [Validators.required, Validators.pattern('^[^:]+$')]);
   editHomeForm = new FormGroup({
     editedHomeName: new FormControl('', [Validators.required]),
     selectHomeForEdit: new FormControl(this.homeList, [Validators.required]),
@@ -106,7 +106,7 @@ export class ManageEntitiesComponent implements OnInit {
 
   // Manage Room Section
   addRoomForm = new FormGroup({
-    addRoomField: new FormControl('', [Validators.required]),
+    addRoomField: new FormControl('', [Validators.required, Validators.pattern('^[^:]+$')]),
     homeListField: new FormControl(this.homeList, [Validators.required]),
   });
   editRoomForm = new FormGroup({
@@ -214,7 +214,6 @@ export class ManageEntitiesComponent implements OnInit {
       room = form.controls.selectRoomForItem.value,
       home = form.controls.selectHomeForItem.value,
       uuid = Md5.hashStr(name + count + description + landmark + home + room);
-    this.uuidMsg = uuid;
     if (action == 'edit') { uuidOld = this.uuidInQuery; }
     let actionPromise = this.loadInventoryImageFile()
       .then(data => {
@@ -224,7 +223,7 @@ export class ManageEntitiesComponent implements OnInit {
         this.esService.manageInventory(action, uuid, name, description, count,
           landmark, room, home, uuidOld, image, imageExist);
       })
-    this.actionPromiseHandler(successMsg, actionPromise);
+    this.actionPromiseHandler(successMsg, actionPromise, uuid);
   }
 
   loadInventoryImageFile(): Promise<string> {
@@ -296,7 +295,7 @@ export class ManageEntitiesComponent implements OnInit {
   }
 
   // Utility Functions
-  actionPromiseHandler(successMsg: string, actionPromise: Promise<any>) {
+  actionPromiseHandler(successMsg: string, actionPromise: Promise<any>, uuid: string | Int32Array = null) {
     this.displayAddStatus = 'progress';
     this.disableSubmitBtn = true;
     return actionPromise
@@ -304,6 +303,7 @@ export class ManageEntitiesComponent implements OnInit {
         this.clearAllForms();
         this.displayAddStatus = 'success';
         this.successMessage = successMsg;
+        this.uuidMsg = uuid;
       })
       .catch(error => {
         this.displayAddStatus = 'error';
