@@ -16,6 +16,7 @@ export class NavComponent implements OnInit {
   public HOME_PATH = '/' + AppRoutes.home;
   public CONFIG_PATH = '/' + AppRoutes.config;
   public MANAGE_PATH = '/' + AppRoutes.manage;
+  public ABOUT_PATH = '/' + AppRoutes.about;
   public collapseEnabled = 'NavBar';
   public connectionStatus = false;
   constructor(private cookieService: CookieService, private esService: ElasticSearchService) { }

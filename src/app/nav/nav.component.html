@@ -18,15 +18,22 @@
                 <a class="nav-link" data-toggle="collapse" data-target="#collapsibleNavbar"
                     [routerLink]=[MANAGE_PATH]>Manage Inventory</a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link" data-toggle="collapse" data-target="#collapsibleNavbar"
+                    [routerLink]=[ABOUT_PATH]>About</a>
+            </li>
         </ul>
         <ul class="navbar-nav ml-auto">
             <li *ngIf="connectionStatus" class="d-none d-md-flex nav-item">
-                <button aria-label="Connected to Elastic Search server" type="button" class="btn btn-success"> Elastic
+                <button aria-label="Connected to Elastic Search server" type="button"
+                    class="btn btn-success btn-connection-status" disabled>
+                    Elastic
                     Search Server Connected </button>
             </li>
 
             <li *ngIf="!connectionStatus" class="d-none d-md-flex nav-item">
-                <button aria-label="Not connected to Elastic Search server" type="button" class="btn btn-danger">
+                <button aria-label="Not connected to Elastic Search server" type="button"
+                    class="btn btn-danger btn-connection-status" disabled>
                     Elastic Search Server Disconnected </button>
             </li>
         </ul>
