@@ -10,21 +10,20 @@ This project was generated with Angular CLI version 10.1.2.
 
 ## Setup
 
+You can use Elastic search as a service, in which case you can skip step 2 & 3.
+
 1. Install requirements: `npm install --dev`
 2. Setup elastic search, in `/etc/elasticsearch/elasticsearch.yml` add:
 ```yaml
-cluster.initial_master_nodes: node-1
-network.bind_host: 0.0.0.0
-network.publish_host: 0.0.0.0
-http.host: 0.0.0.0
-network.host: ["0.0.0.0", 127.0.0.1", "[::1]"]
+cluster.initial_master_nodes: homenode
+network.host: 0.0.0.0
 http.cors.enabled : true
 http.cors.allow-origin : "*"
 http.cors.allow-methods : OPTIONS, HEAD, GET, POST, PUT, DELETE
 path.repo: ["/invar/home-inventory"]
 ```
-
-3. Run server: `ng serve`
+3. Start elastic search `sudo service elasticsearch start`
+4. Run server: `ng serve`
 
 ## Backup elasticsearch data
 

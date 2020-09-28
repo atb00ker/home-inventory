@@ -1,20 +1,51 @@
 <div class="container mt-4">
     <div class="row">
-        <form #esUrlForm="ngForm" class="col-12" (ngSubmit)="esUrlConnectClick()">
-            <span>
-                <label for="es-url-input"> Enter Elastic Search Server URL: </label>
-            </span>
-            <input name="es-url-input" aria-label="Elastic Search Server URL" id="es-url-input"
-                placeholder=" {{ esDefaultUrl }}" type="text" [formControl]="esUrl"
-                [ngClass]="{'text-danger error-input': esUrl.invalid && esUrl.touched}">
-            <button aria-label="Connect to Elastic Search server" title="Enter elastic search server"
-                [disabled]="esUrl.invalid || disableConnectBtn" type="submit" id="es-url-button"
-                class="btn btn-primary">
-                <svg class="icon-white" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
-                    <path
-                        d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z" />
-                </svg>
-            </button>
+        <form [formGroup]="elasticSearchInfoForm" class="manage-storage-container row mt-4"
+            (ngSubmit)="esConnectClick()">
+            <div class="col-12">
+                <span>
+                    <label for="es-url-input"> Enter Elastic Search Server URL: </label>
+                </span>
+                <input name="es-url-input" aria-label="Elastic Search Server URL" class="general-input"
+                    placeholder="{{ esDefaultUrl }}" type="text"
+                    [ngClass]="{'text-danger error-input': elasticSearchInfoForm.get('esUrl').invalid && elasticSearchInfoForm.get('esUrl').touched}"
+                    formControlName="esUrl">
+            </div>
+            <div class="col-6 mt-2">
+                <span>
+                    <label for="es-username-input"> Username: </label>
+                </span>
+                <input name="es-username-input" aria-label="Username" class="general-input" type="text"
+                    [ngClass]="{'text-danger error-input': elasticSearchInfoForm.get('username').invalid && elasticSearchInfoForm.get('username').touched}"
+                    formControlName="username">
+            </div>
+            <div class="col-6 mt-2">
+                <span>
+                    <label for="es-url-input"> Password: </label>
+                </span>
+                <input name="es-url-input" aria-label="Elastic Search Server URL" class="input-inline-submit-btn"
+                    type="password"
+                    [ngClass]="{'text-danger error-input': elasticSearchInfoForm.get('password').invalid && elasticSearchInfoForm.get('password').touched}"
+                    formControlName="password">
+                <button aria-label="Connect to Elastic Search server" title="Enter elastic search server"
+                    [disabled]="elasticSearchInfoForm.get('esUrl').invalid || disableConnectBtn" type="submit"
+                    class="btn btn-primary btn-inline-form-input">
+                    <svg class="icon-white" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 3 24 24"
+                        width="24">
+                        <path
+                            d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z" />
+                    </svg>
+                </button>
+            </div>
         </form>
+        <a href="#" (click)="deleteCookieClick()">clear cache</a>
+
+        <div class="row justify-content-center">
+            <div class="col-10 text-center text-secondary mb-4 mt-4">
+                Your authentication information is deleted from browser after 20 days, but you can click clear cache to
+                delete it immediately. In most cases you don't need to worry about the cached value, but if you are
+                using this site on a public device, you should clear cache before leaving.
+            </div>
+        </div>
     </div>
 </div>

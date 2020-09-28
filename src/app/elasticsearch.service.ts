@@ -3,9 +3,7 @@ import { BehaviorSubject } from 'rxjs';
 import { CookieService } from 'ngx-cookie-service';
 import { interval } from 'rxjs';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { catchError } from 'rxjs/operators';
 import { DomSanitizer } from '@angular/platform-browser';
-import { FormGroup } from '@angular/forms';
 
 @Injectable({
   providedIn: 'root',
@@ -32,55 +30,70 @@ export class ElasticSearchService {
     this._getStorageMetaData();
   }
 
-  createConnection() {
+  createConnection(): Promise<any> {
     let server = this.cookieService.get('es-server');
-    if (!server) {
-      server = 'http://localhost:9200';
-    }
-    this.cookieService.set('es-server', server);
-    this._updateStatus();
-    this._initElasticSearchIndexes();
+    if (!server) { server = 'http://localhost:9200'; }
+    this.cookieService.set('es-server', server, 90);
+    return this._initElasticSearchIndexes().then(() => this._updateStatus());
   }
 
-  _initElasticSearchIndexes() {
-    this.createEmptyMetaIndex()
+  _initElasticSearchIndexes(): Promise<any> {
+    if (this.cookieService.get('es-auth')) {
+      this.jsonHttpheaders = new HttpHeaders({
+        'Content-type': 'application/json',
+        'Authorization': 'Bearer ' + this.cookieService.get('es-auth')
+      });
+    }
+    else {
+      this.jsonHttpheaders = new HttpHeaders({ 'Content-type': 'application/json' });
+    }
+    let metadataPromise = this.createEmptyMetaIndex()
       .then()
       .catch(error => console.error('Error: ' + error.message));
-    this.createEmptyInventory()
+    let inventoryPromise = this.createEmptyInventory()
       .then()
       .catch(error => console.error('Error: ' + error.message));
+    return Promise.allSettled([metadataPromise, inventoryPromise]);
   }
 
   createEmptyMetaIndex(): Promise<any> {
-    let path = this.cookieService.get('es-server') + this.pathToMetadata;
-    return this.http.get(path).pipe(catchError(() => {
-      let data = `
-      {
-        "home" : [],
-        "room" : []
-      }`;
-      return this.http.put(path, data, { headers: this.jsonHttpheaders })
-    })).toPromise();
+    let server = this.cookieService.get('es-server');
+    return this.http.get(server + this.pathToMetadata, { headers: this.jsonHttpheaders }).toPromise()
+      .catch(() => {
+        let data = '{ "home" : [], "room" : [] }',
+          indexInventoryPromise = this.http
+            .put(server + '/inventory', null, { headers: this.jsonHttpheaders }).toPromise(),
+          indexInventoryImagesPromise = this.http
+            .put(server + '/inventory-images', null, { headers: this.jsonHttpheaders }).toPromise(),
+          indexInventoryDataPromise = this.http
+            .put(server + '/inventory-data', null, { headers: this.jsonHttpheaders }).toPromise(),
+          indexInventoryMetaPromise = this.http
+            .put(server + this.pathToMetadata, data, { headers: this.jsonHttpheaders }).toPromise();
+        return Promise.allSettled([indexInventoryPromise, indexInventoryImagesPromise,
+          indexInventoryMetaPromise, indexInventoryDataPromise]);
+      });
   }
 
   createEmptyInventory(): Promise<any> {
     let path = this.cookieService.get('es-server') + '/inventory';
-    return this.http.get(path).pipe(catchError(() => {
-      let data = `{
-        "mappings": {
-          "properties": {
-            "name": { "type": "text" },
-            "description": { "type": "text" },
-            "count": { "type": "short" },
-            "home": { "type": "keyword" },
-            "room": { "type": "keyword" },
-            "landmark": { "type": "text" },
-            "imageExist": { "type": "boolean" }
+    return this.http.get(path, { headers: this.jsonHttpheaders }).toPromise()
+      .catch(() => {
+        let data = `{
+          "mappings": {
+            "properties": {
+              "name": { "type": "text" },
+              "description": { "type": "text" },
+              "count": { "type": "short" },
+              "home": { "type": "keyword" },
+              "room": { "type": "keyword" },
+              "landmark": { "type": "text" },
+              "imageExist": { "type": "boolean" }
+            }
           }
-        }
-      }`
-      return this.http.put(path, data, { headers: this.jsonHttpheaders })
-    })).toPromise();
+        }`
+        this.http.put(path, data, { headers: this.jsonHttpheaders }).toPromise()
+          .then()
+      });
   }
 
   _updateStatus() {
@@ -93,7 +106,7 @@ export class ElasticSearchService {
   }
 
   updateStatus(): Promise<any> {
-    return this.http.get(this.cookieService.get('es-server')).toPromise();
+    return this.http.get(this.cookieService.get('es-server'), { headers: this.jsonHttpheaders }).toPromise();
   }
 
   // Location Management
@@ -133,21 +146,19 @@ export class ElasticSearchService {
   }
 
   removeLocation(fieldName: string, itemName: string, deleteItems: boolean = true): Promise<any> {
+    let realItemName = fieldName == 'room' ? itemName.split('::')[1] : itemName,
+      deletePath = this.cookieService.get('es-server') + '/inventory/_delete_by_query',
+      deleteQuery = '{"query": { "bool": { "must": [{ "term": { "' +
+        fieldName + '": "' + realItemName + '" }} ]}}}',
+      deleteInventory = this.http.post(deletePath, deleteQuery,
+        { headers: this.jsonHttpheaders }).toPromise();
     let path = this.cookieService.get('es-server') + this.pathToUpdateMetadata,
       ctx_source = `ctx._source.` + fieldName,
       removeFromList = ctx_source + `.remove(` + ctx_source + `.indexOf('` + itemName + `'));`,
       data = '{ "script" : { "source": "' + removeFromList + '" }}',
-      metaDataPromise = this.http.post(path, data,
-        { headers: this.jsonHttpheaders }).toPromise(), inventoryPromise;
-    if (deleteItems) {
-      let realItemName = fieldName == 'room' ? itemName.split('::')[1] : itemName,
-        deletePath = this.cookieService.get('es-server') + '/inventory/_delete_by_query',
-        deleteQuery = '{"query": { "bool": { "must": [{ "term": { "' +
-          fieldName + '": "' + realItemName + '" }} ]}}}';
-      inventoryPromise = this.http.post(deletePath, deleteQuery,
-        { headers: this.jsonHttpheaders }).toPromise();
-    }
-    return Promise.all([metaDataPromise, inventoryPromise]);
+      deleteMetadata = this.http.post(path, data,
+        { headers: this.jsonHttpheaders }).toPromise().then();
+    return Promise.allSettled([deleteInventory, deleteMetadata]);
   }
 
   // Manage Inventory
@@ -188,7 +199,7 @@ export class ElasticSearchService {
 
   deleteInventoryImage(uuid: string | Int32Array): Promise<any> {
     let imgPath = this.cookieService.get('es-server') + '/inventory-images/_doc/' + uuid;
-    return this.http.get(imgPath).toPromise()
+    return this.http.get(imgPath, { headers: this.jsonHttpheaders }).toPromise()
       .then(() => {
         let bulkUrl = this.cookieService.get('es-server') + '/_bulk';
         let bulkData = '{ "delete" : { "_index" : "inventory-images", "_id" : "' + uuid + '" } }\n' +
@@ -201,7 +212,7 @@ export class ElasticSearchService {
 
   deleteInventory(uuid: string | Int32Array): Promise<any> {
     let path = this.cookieService.get('es-server') + '/inventory/_doc/' + uuid;
-    return this.http.delete(path).toPromise()
+    return this.http.delete(path, { headers: this.jsonHttpheaders }).toPromise()
   }
 
   editInventory(uuid: string | Int32Array, name: string, description: string, count: number,
@@ -214,12 +225,12 @@ export class ElasticSearchService {
 
   getInventoryItemByUUID(uuid: string) {
     let url = this.cookieService.get('es-server') + '/inventory/_doc/' + uuid;
-    return this.http.get(url).toPromise();
+    return this.http.get(url, { headers: this.jsonHttpheaders }).toPromise();
   }
 
   getInventoryItemImage(uuid: string) {
     let url = this.cookieService.get('es-server') + '/inventory-images/_doc/' + uuid;
-    return this.http.get(url).toPromise();
+    return this.http.get(url, { headers: this.jsonHttpheaders }).toPromise();
   }
 
   // Search Section
@@ -263,7 +274,7 @@ export class ElasticSearchService {
   }
 
   getStorageMetaData(): Promise<any> {
-    return this.http.get(this.cookieService.get('es-server') + this.pathToMetadata).toPromise();
+    return this.http.get(this.cookieService.get('es-server') + this.pathToMetadata, { headers: this.jsonHttpheaders }).toPromise();
   }
 
   getRoomListName(homeName, roomName): string {

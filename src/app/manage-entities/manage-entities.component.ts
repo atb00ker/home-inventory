@@ -229,6 +229,7 @@ export class ManageEntitiesComponent implements OnInit {
   loadInventoryImageFile(): Promise<string> {
     let fileInfo = (<HTMLInputElement>document.getElementById("es-inventory-file-input")).files[0];
     if (fileInfo) {
+      this.editInventoryForm.patchValue({ imageExist: true });
       return new Promise((resolve, reject) => {
         let fileReader = new FileReader();
         fileReader.readAsDataURL(fileInfo);
