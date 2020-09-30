@@ -197,6 +197,16 @@ export class ElasticSearchService {
       });
   }
 
+  getInventoryItemByUUID(uuid: string) {
+    let url = this.cookieService.get('es-server') + '/inventory/_doc/' + uuid;
+    return this.http.get(url, { headers: this.jsonHttpheaders }).toPromise();
+  }
+
+  getInventoryItemImage(uuid: string | Int32Array) {
+    let url = this.cookieService.get('es-server') + '/inventory-images/_doc/' + uuid;
+    return this.http.get(url, { headers: this.jsonHttpheaders }).toPromise();
+  }
+
   deleteInventoryImage(uuid: string | Int32Array): Promise<any> {
     let imgPath = this.cookieService.get('es-server') + '/inventory-images/_doc/' + uuid;
     return this.http.get(imgPath, { headers: this.jsonHttpheaders }).toPromise()
@@ -218,19 +228,14 @@ export class ElasticSearchService {
   editInventory(uuid: string | Int32Array, name: string, description: string, count: number,
     landmark: string, room: string, home: string,
     uuidOld: string | Int32Array, image: string | null, imageExist): Promise<any> {
-
-    return this.deleteInventory(uuidOld)
-      .then(() => this.addInventory(uuid, name, description, count, landmark, room, home, image, imageExist));
-  }
-
-  getInventoryItemByUUID(uuid: string) {
-    let url = this.cookieService.get('es-server') + '/inventory/_doc/' + uuid;
-    return this.http.get(url, { headers: this.jsonHttpheaders }).toPromise();
-  }
-
-  getInventoryItemImage(uuid: string) {
-    let url = this.cookieService.get('es-server') + '/inventory-images/_doc/' + uuid;
-    return this.http.get(url, { headers: this.jsonHttpheaders }).toPromise();
+    return this.getInventoryItemImage(uuidOld).then(data => {
+      if (imageExist && image == null) { image = data["_source"]["image"]; }
+      this.deleteInventory(uuidOld)
+        .then(() => this.addInventory(uuid, name, description, count, landmark, room, home, image, imageExist));
+    }).catch(() => {
+      this.deleteInventory(uuidOld)
+        .then(() => this.addInventory(uuid, name, description, count, landmark, room, home, image, imageExist));
+    });
   }
 
   // Search Section
@@ -241,7 +246,7 @@ export class ElasticSearchService {
     else {
       searchInHome !== '' ? homeInfo = '{ "term": { "home": "' + searchInHome + '" } },' : homeInfo = '';
       searchInRoom !== '' ? roomInfo = '{ "term": { "room": "' + searchInRoom + '" } },' : roomInfo = '';
-      data = `{"query": { "bool": {
+      data = `{"size": 10000, "query": { "bool": {
                 "must": [` + homeInfo + roomInfo + `
                   {
                     "multi_match": {

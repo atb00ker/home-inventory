@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { Title } from "@angular/platform-browser";
 import { AppRoutes } from '../app.routes';
@@ -103,8 +103,14 @@ export class HomeComponent implements OnInit {
       });
   }
 
+  @HostListener('document:keydown.escape', ['$event'])
+  handleKeyboardEvent(event: KeyboardEvent) {
+    this.hideModelBtn();
+  }
+
   hideModelBtn() {
     let modal = <HTMLImageElement>document.getElementById("image-model-container");
     modal.style.display = "none";
   }
+
 }

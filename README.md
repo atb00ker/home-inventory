@@ -41,6 +41,7 @@ curl -XPUT localhost:9200/_snapshot/inventory \
 ```
 3. Create Backup:
 ```bash
+# curl -XDELETE localhost:9200/_snapshot/inventory/inventory
 curl -XPUT localhost:9200/_snapshot/inventory/inventory \
       -H 'Content-Type: application/json'               \
       -d '{
